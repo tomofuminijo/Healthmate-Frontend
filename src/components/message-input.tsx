@@ -15,6 +15,7 @@ interface MessageInputProps {
 /**
  * MessageInput コンポーネント
  * メッセージ入力フォームとキーボードショートカット対応
+ * 日本語入力（IME）対応
  */
 export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
@@ -24,6 +25,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   className
 }) => {
   const [message, setMessage] = useState('');
+  const [isComposing, setIsComposing] = useState(false); // IME変換中フラグ
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /**
@@ -45,12 +47,31 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   /**
+   * IME変換開始
+   */
+  const handleCompositionStart = () => {
+    setIsComposing(true);
+  };
+
+  /**
+   * IME変換終了
+   */
+  const handleCompositionEnd = () => {
+    setIsComposing(false);
+  };
+
+  /**
    * キーボードショートカット処理
-   * - Enter: 送信
+   * - Enter: 送信（IME変換中は無効）
    * - Shift + Enter: 改行
    */
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      // IME変換中は送信しない
+      if (isComposing) {
+        return;
+      }
+      
       e.preventDefault();
       handleSendMessage();
     }
@@ -84,6 +105,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             value={message}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             placeholder={placeholder}
             disabled={disabled || isLoading}
             className={cn(
