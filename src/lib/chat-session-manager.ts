@@ -125,20 +125,37 @@ export class ChatSessionManager {
   }
 
   /**
-   * セッションにメッセージを追加または更新
+   * セッションにメッセージを追加
+   * 注意: 同じIDのメッセージが既に存在する場合は更新、存在しない場合は追加
    */
   static addMessageToSession(
     sessions: ChatSession[],
     sessionId: string,
     message: Message
   ): ChatSession[] {
+    console.log('🔧 ChatSessionManager.addMessageToSession called:', {
+      sessionId,
+      messageId: message.id,
+      messageRole: message.role,
+      sessionsCount: sessions.length,
+      targetSessionExists: sessions.some(s => s.id === sessionId)
+    });
+
     return sessions.map(session => {
       if (session.id === sessionId) {
         // 既存のメッセージを探す
         const existingMessageIndex = session.messages.findIndex(m => m.id === message.id);
         
+        console.log('🔍 Session found, checking for existing message:', {
+          sessionId: session.id,
+          currentMessageCount: session.messages.length,
+          existingMessageIndex,
+          messageId: message.id
+        });
+        
         if (existingMessageIndex >= 0) {
           // 既存メッセージを更新
+          console.log('🔄 Updating existing message:', message.id);
           const updatedMessages = [...session.messages];
           updatedMessages[existingMessageIndex] = message;
           return {
@@ -148,11 +165,14 @@ export class ChatSessionManager {
           };
         } else {
           // 新しいメッセージを追加
-          return {
+          console.log('➕ Adding new message:', message.id);
+          const newSession = {
             ...session,
             messages: [...session.messages, message],
             updatedAt: new Date(),
           };
+          console.log('✅ New session created with message count:', newSession.messages.length);
+          return newSession;
         }
       }
       return session;

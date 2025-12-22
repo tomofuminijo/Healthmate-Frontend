@@ -24,8 +24,20 @@ const ChatTestScreen: React.FC = () => {
     currentChatSession, 
     createNewChatSession, 
     switchChatSession, 
-    deleteChatSession 
+    deleteChatSession,
+    isLoading
   } = useChat();
+
+  // チャットセッション状態のログ出力
+  React.useEffect(() => {
+    console.log('🖥️ ChatTestScreen render:', {
+      isLoading,
+      chatSessionsCount: chatSessions.length,
+      hasCurrentSession: !!currentChatSession,
+      currentSessionId: currentChatSession?.id,
+      currentSessionMessageCount: currentChatSession?.messages?.length
+    });
+  }, [isLoading, chatSessions.length, currentChatSession?.id, currentChatSession?.messages?.length]);
 
   const handleLogout = async () => {
     try {
@@ -34,6 +46,17 @@ const ChatTestScreen: React.FC = () => {
       console.error('Logout error:', error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg mb-2">💬</div>
+          <p className="text-sm text-muted-foreground">チャットセッションを初期化中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -137,11 +160,7 @@ const ChatTestScreen: React.FC = () => {
  * ダッシュボードコンポーネント（認証後のメイン画面）
  */
 const Dashboard: React.FC = () => {
-  return (
-    <ChatProvider>
-      <ChatTestScreen />
-    </ChatProvider>
-  );
+  return <ChatTestScreen />;
 };
 
 function App() {
@@ -149,18 +168,20 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AuthProvider cognitoConfig={config.cognito}>
-          <Routes>
-            <Route path="/login" element={<LoginForm />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+          <ChatProvider>
+            <Routes>
+              <Route path="/login" element={<LoginForm />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </ChatProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

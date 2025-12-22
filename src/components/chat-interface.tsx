@@ -77,10 +77,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
    * メッセージ送信処理（実際のCoachAI API優先）
    */
   const handleSendMessage = async (content: string) => {
+    console.log('🚀 handleSendMessage called:', {
+      content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+      hasCurrentSession: !!currentChatSession,
+      sessionId: currentChatSession?.id,
+      sessionMessageCount: currentChatSession?.messages?.length
+    });
+
     // エラー状態をクリア
     setError(null);
 
     // ユーザーメッセージをローカルセッションに保存
+    console.log('👤 Adding user message...');
     addMessage({
       role: 'user',
       content,
@@ -112,11 +120,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         // 空のAIメッセージを先に作成
         const aiMessageId = `ai-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
+        console.log('🤖 Creating initial AI message:', aiMessageId);
+        
         addMessage({
           role: 'assistant',
-          content: '',
+          content: '考え中...',
           id: aiMessageId
         });
+
+        // React状態更新の完了を待つ（より長い待機時間）
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        console.log('⏰ State update wait completed, starting streaming...');
 
         let accumulatedContent = '';
         
@@ -132,12 +147,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         )) {
           accumulatedContent += chunk;
           
-          // チャンクごとにメッセージを更新（addMessageを使用して既存メッセージを更新）
-          addMessage({
-            role: 'assistant',
-            content: accumulatedContent,
-            id: aiMessageId
+          console.log('📦 Received chunk:', {
+            chunk: chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''),
+            chunkLength: chunk.length,
+            totalLength: accumulatedContent.length,
+            messageId: aiMessageId
           });
+          
+          // チャンクごとにメッセージを更新（updateMessageを使用）
+          updateMessage(aiMessageId, accumulatedContent);
         }
         
         console.log('✅ 実際のCoachAI APIからストリーミング応答完了:', {
@@ -149,7 +167,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         console.warn('⚠️ 実際のCoachAI APIが利用できません。モックAPIにフォールバック:', {
           error: apiError,
           errorType: apiError?.constructor?.name,
-          errorMessage: apiError?.message
+          errorMessage: (apiError as Error)?.message
         });
         
         // モックAPIにフォールバック

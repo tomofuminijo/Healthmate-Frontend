@@ -18,17 +18,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   
   return (
     <div className={cn(
-      "flex w-full",
-      isUser ? "justify-end" : "justify-start"
+      "w-full", // mb-4を削除（MessageListでspace-y-2を使用）
+      isUser ? "flex justify-end" : "flex justify-start"
     )}>
       <div 
         className={cn(
-          "max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl",
-          "px-4 py-3 rounded-lg shadow-sm",
-          "break-words", // 長い単語の改行対応
+          "px-4 py-3 rounded-lg shadow-sm break-words",
           isUser 
-            ? "bg-primary text-primary-foreground ml-4" // ユーザーメッセージ: プライマリカラー、右寄せ
-            : "bg-muted text-muted-foreground mr-4" // AIメッセージ: ミュートカラー、左寄せ
+            ? "max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl bg-primary text-primary-foreground" // ユーザーメッセージ: 制限幅、右寄せ
+            : "w-full bg-muted text-muted-foreground" // AIメッセージ: 画面全体幅
         )}
         data-role={message.role}
       >
@@ -41,7 +39,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         </div>
         
         {/* メッセージ内容 */}
-        <div className="text-sm leading-relaxed">
+        <div className={cn(
+          "text-sm leading-relaxed",
+          isUser ? "" : "max-w-none" // AIメッセージは幅制限なし
+        )}>
           {isUser ? (
             // ユーザーメッセージ: プレーンテキスト表示
             <p className="whitespace-pre-wrap">{message.content}</p>
@@ -51,7 +52,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               {message.content ? (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-sm max-w-none dark:prose-invert" // max-w-noneで幅制限を解除
                   components={{
                     // カスタムコンポーネントでスタイリング調整
                     p: ({ children }) => (

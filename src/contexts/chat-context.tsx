@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from 'react';
 import { ChatSession, Message } from '@/types/chat';
 import { ChatSessionManager } from '@/lib/chat-session-manager';
 
@@ -25,6 +25,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [currentChatSession, setCurrentChatSession] = useState<ChatSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 最新の状態を参照するためのRef
+  const chatSessionsRef = useRef<ChatSession[]>([]);
+  const currentChatSessionRef = useRef<ChatSession | null>(null);
+
+  // Refを常に最新の状態に同期
+  useEffect(() => {
+    chatSessionsRef.current = chatSessions;
+  }, [chatSessions]);
+
+  useEffect(() => {
+    currentChatSessionRef.current = currentChatSession;
+  }, [currentChatSession]);
+
   useEffect(() => {
     initializeChatSessions();
   }, []);
@@ -34,14 +47,22 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
    */
   const initializeChatSessions = () => {
     try {
+      console.log('🚀 Initializing chat sessions...');
       setIsLoading(true);
       
       // localStorageからチャットセッションを復元
       const savedChatSessions = ChatSessionManager.loadChatSessions();
       const activeSessionId = ChatSessionManager.loadActiveSessionId();
       
+      console.log('📂 Loaded from localStorage:', {
+        savedSessionsCount: savedChatSessions.length,
+        activeSessionId,
+        savedSessions: savedChatSessions.map(s => ({ id: s.id, title: s.title, messageCount: s.messages.length }))
+      });
+      
       if (savedChatSessions.length === 0) {
         // 初回訪問時は新しいセッションを作成
+        console.log('🆕 Creating new session (first visit)');
         const newSession = ChatSessionManager.createNewChatSession();
         const sessions = [newSession];
         
@@ -50,6 +71,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         
         ChatSessionManager.saveChatSessions(sessions);
         ChatSessionManager.saveActiveSessionId(newSession.id);
+        
+        console.log('✅ New session created:', {
+          sessionId: newSession.id,
+          title: newSession.title
+        });
       } else {
         setChatSessions(savedChatSessions);
         
@@ -66,15 +92,25 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         }
         
         setCurrentChatSession(activeSession);
+        
+        console.log('✅ Sessions restored:', {
+          totalSessions: savedChatSessions.length,
+          activeSessionId: activeSession.id,
+          activeSessionTitle: activeSession.title,
+          activeSessionMessageCount: activeSession.messages.length
+        });
       }
     } catch (error) {
-      console.error('Chat initialization failed:', error);
+      console.error('❌ Chat initialization failed:', error);
       // エラー時は新しいセッションを作成
       const newSession = ChatSessionManager.createNewChatSession();
       setChatSessions([newSession]);
       setCurrentChatSession(newSession);
+      
+      console.log('🔄 Fallback session created:', newSession.id);
     } finally {
       setIsLoading(false);
+      console.log('🏁 Chat initialization complete');
     }
   };
 
@@ -152,81 +188,175 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   /**
    * チャットセッションのタイトルを更新
    */
-  const updateChatSessionTitle = (chatSessionId: string, title: string) => {
-    const updatedSessions = ChatSessionManager.updateSessionTitle(chatSessions, chatSessionId, title);
+  const updateChatSessionTitle = useCallback((chatSessionId: string, title: string) => {
+    console.log('🏷️ updateChatSessionTitle called:', {
+      chatSessionId,
+      title,
+      currentSessionsCount: chatSessionsRef.current.length,
+      availableSessions: chatSessionsRef.current.map(s => ({ id: s.id, title: s.title }))
+    });
+
+    const updatedSessions = ChatSessionManager.updateSessionTitle(chatSessionsRef.current, chatSessionId, title);
     
+    console.log('🔄 Sessions after updateSessionTitle:', {
+      originalSessionCount: chatSessionsRef.current.length,
+      updatedSessionCount: updatedSessions.length,
+      targetSessionId: chatSessionId
+    });
+
+    // Refを先に更新
+    chatSessionsRef.current = updatedSessions;
     setChatSessions(updatedSessions);
     
     // 現在のセッションのタイトルが更新された場合
-    if (currentChatSession?.id === chatSessionId) {
-      setCurrentChatSession({ ...currentChatSession, title, updatedAt: new Date() });
+    if (currentChatSessionRef.current?.id === chatSessionId) {
+      const updatedCurrentSession = { ...currentChatSessionRef.current, title, updatedAt: new Date() };
+      currentChatSessionRef.current = updatedCurrentSession;
+      setCurrentChatSession(updatedCurrentSession);
     }
     
     ChatSessionManager.saveChatSessions(updatedSessions);
-  };
+  }, []);
 
   /**
    * メッセージを追加
    */
-  const addMessage = (messageData: Omit<Message, 'id' | 'timestamp' | 'chatSessionId'> & { id?: string }) => {
-    if (!currentChatSession) {
-      console.error('No active chat session');
+  const addMessage = useCallback((messageData: Omit<Message, 'id' | 'timestamp' | 'chatSessionId'> & { id?: string }) => {
+    console.log('🔍 addMessage function called:', {
+      hasCurrentChatSession: !!currentChatSessionRef.current,
+      currentChatSessionId: currentChatSessionRef.current?.id,
+      messageRole: messageData.role,
+      messageId: messageData.id,
+      contentLength: messageData.content.length,
+      currentSessionsCount: chatSessionsRef.current.length
+    });
+
+    if (!currentChatSessionRef.current) {
+      console.error('❌ No active chat session - cannot add message:', {
+        chatSessions: chatSessionsRef.current.length,
+        messageData
+      });
       return;
     }
 
     const message: Message = {
       id: messageData.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       timestamp: new Date(),
-      chatSessionId: currentChatSession.id,
+      chatSessionId: currentChatSessionRef.current.id,
       role: messageData.role,
       content: messageData.content,
     };
 
+    console.log('➕ addMessage called:', {
+      messageId: message.id,
+      role: message.role,
+      contentLength: message.content.length,
+      sessionId: currentChatSessionRef.current.id,
+      currentMessageCount: currentChatSessionRef.current.messages.length
+    });
+
     const updatedSessions = ChatSessionManager.addMessageToSession(
-      chatSessions,
-      currentChatSession.id,
+      chatSessionsRef.current,
+      currentChatSessionRef.current.id,
       message
     );
 
-    setChatSessions(updatedSessions);
-    
+    console.log('🔄 Sessions after addMessageToSession:', {
+      originalSessionCount: chatSessionsRef.current.length,
+      updatedSessionCount: updatedSessions.length,
+      targetSessionId: currentChatSessionRef.current.id,
+      originalSessions: chatSessionsRef.current.map(s => ({ id: s.id, messageCount: s.messages.length })),
+      updatedSessions: updatedSessions.map(s => ({ id: s.id, messageCount: s.messages.length }))
+    });
+
     // 現在のセッションを更新
-    const updatedCurrentSession = ChatSessionManager.getSessionById(updatedSessions, currentChatSession.id);
+    const updatedCurrentSession = ChatSessionManager.getSessionById(updatedSessions, currentChatSessionRef.current.id);
     if (updatedCurrentSession) {
+      console.log('✅ Session updated after addMessage:', {
+        sessionId: updatedCurrentSession.id,
+        messageCount: updatedCurrentSession.messages.length,
+        lastMessageId: updatedCurrentSession.messages[updatedCurrentSession.messages.length - 1]?.id
+      });
+      
+      // Refを先に更新（重要！）
+      chatSessionsRef.current = updatedSessions;
+      currentChatSessionRef.current = updatedCurrentSession;
+      
+      // React状態を更新
+      setChatSessions(updatedSessions);
       setCurrentChatSession(updatedCurrentSession);
+      
+      console.log('🔄 After state update - Ref status:', {
+        refSessionsCount: chatSessionsRef.current.length,
+        refCurrentSessionId: currentChatSessionRef.current?.id,
+        refCurrentSessionMessageCount: currentChatSessionRef.current?.messages?.length
+      });
       
       // 最初のメッセージの場合、タイトルを自動生成
       if (updatedCurrentSession.messages.length === 1 && messageData.role === 'user') {
         const autoTitle = ChatSessionManager.generateTitleFromMessage(messageData.content);
-        updateChatSessionTitle(currentChatSession.id, autoTitle);
+        updateChatSessionTitle(currentChatSessionRef.current.id, autoTitle);
       }
+    } else {
+      console.error('❌ Failed to get updated session:', currentChatSessionRef.current.id);
+      console.error('Available sessions:', updatedSessions.map(s => ({ id: s.id, messageCount: s.messages.length })));
     }
 
     ChatSessionManager.saveChatSessions(updatedSessions);
-  };
+  }, []); // 依存関係なし（Refを使用するため）
 
   /**
    * メッセージを更新（ストリーミング用）
    */
-  const updateMessage = (messageId: string, content: string) => {
-    if (!currentChatSession) {
-      console.error('No active chat session');
+  const updateMessage = useCallback((messageId: string, content: string) => {
+    console.log('🔄 updateMessage called:', {
+      messageId,
+      contentLength: content.length,
+      content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      hasCurrentChatSession: !!currentChatSessionRef.current,
+      currentChatSessionId: currentChatSessionRef.current?.id,
+      chatSessionsCount: chatSessionsRef.current.length,
+      availableSessions: chatSessionsRef.current.map(s => ({ id: s.id, messageCount: s.messages.length }))
+    });
+
+    if (!currentChatSessionRef.current) {
+      console.error('❌ No active chat session');
       return;
     }
 
-    const updatedSessions = chatSessions.map(session => {
-      if (session.id === currentChatSession.id) {
+    // 最新のchatSessions配列から現在のセッションを取得
+    const latestSession = ChatSessionManager.getSessionById(chatSessionsRef.current, currentChatSessionRef.current.id);
+    if (!latestSession) {
+      console.error('❌ Latest session not found:', currentChatSessionRef.current.id);
+      console.error('Available sessions:', chatSessionsRef.current.map(s => ({ id: s.id, messageCount: s.messages.length })));
+      return;
+    }
+
+    console.log('🔍 Latest session found:', {
+      sessionId: latestSession.id,
+      messageCount: latestSession.messages.length,
+      targetMessageExists: latestSession.messages.some(m => m.id === messageId)
+    });
+
+    const updatedSessions = chatSessionsRef.current.map(session => {
+      if (session.id === currentChatSessionRef.current!.id) {
         const updatedMessages = session.messages.map(message => {
           if (message.id === messageId) {
+            console.log('✅ Message found and updated:', messageId);
             return { ...message, content };
           }
           return message;
         });
         
-        // メッセージが見つからなかった場合のエラーログ（重要なので残す）
+        // メッセージが見つからなかった場合のエラーログ
         const messageFound = session.messages.some(m => m.id === messageId);
         if (!messageFound) {
-          console.error('Message not found for update:', messageId);
+          console.error('❌ Message not found for update:', {
+            messageId,
+            sessionId: session.id,
+            availableMessages: session.messages.map(m => ({ id: m.id, role: m.role }))
+          });
+          return session; // 変更せずに返す
         }
         
         return { ...session, messages: updatedMessages, updatedAt: new Date() };
@@ -234,16 +364,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       return session;
     });
 
-    setChatSessions(updatedSessions);
-    
     // 現在のセッションを更新
-    const updatedCurrentSession = ChatSessionManager.getSessionById(updatedSessions, currentChatSession.id);
+    const updatedCurrentSession = ChatSessionManager.getSessionById(updatedSessions, currentChatSessionRef.current.id);
     if (updatedCurrentSession) {
+      console.log('✅ Current session updated, message count:', updatedCurrentSession.messages.length);
+      
+      // Refを先に更新（重要！）
+      chatSessionsRef.current = updatedSessions;
+      currentChatSessionRef.current = updatedCurrentSession;
+      
+      // React状態を更新
+      setChatSessions(updatedSessions);
       setCurrentChatSession(updatedCurrentSession);
+    } else {
+      console.error('❌ Failed to get updated current session');
     }
 
     ChatSessionManager.saveChatSessions(updatedSessions);
-  };
+  }, []); // 依存関係なし（Refを使用するため）
 
   const contextValue: ChatContextType = {
     chatSessions,
