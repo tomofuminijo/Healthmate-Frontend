@@ -11,7 +11,6 @@ export const config = {
   } as CognitoConfig,
   
   api: {
-    coachAiEndpoint: import.meta.env.VITE_COACHAI_ENDPOINT || 'http://localhost:8000',
     baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   },
 };
