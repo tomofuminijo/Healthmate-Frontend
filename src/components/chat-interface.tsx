@@ -265,23 +265,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         </div>
       )}
 
-      {/* チャット履歴表示エリア */}
-      <MessageList 
-        messages={displayMessages}
-        className="flex-1"
-      />
+      {/* チャット履歴表示エリア - フレックスで残りスペースを占有 */}
+      <div className="flex-1 overflow-hidden">
+        <MessageList 
+          messages={displayMessages}
+          className="h-full"
+        />
+      </div>
 
-      {/* メッセージ入力エリア */}
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
-        disabled={!serviceHealth.available && !!error}
-        placeholder={
-          !serviceHealth.available && !!error
-            ? "サービスが利用できません..."
-            : "健康について何でもお聞きください..."
-        }
-      />
+      {/* メッセージ入力エリア - 画面下部に固定 */}
+      <div className="flex-shrink-0">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          disabled={!serviceHealth.available && !!error}
+          placeholder={
+            !serviceHealth.available && !!error
+              ? "サービスが利用できません..."
+              : "健康について何でもお聞きください..."
+          }
+        />
+      </div>
     </div>
   );
 };

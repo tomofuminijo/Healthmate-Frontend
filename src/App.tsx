@@ -148,8 +148,8 @@ const ChatTestScreen: React.FC = () => {
         </div>
 
         {/* メインチャットエリア */}
-        <div className="flex-1 flex flex-col">
-          <ChatInterface />
+        <div className="flex-1 flex flex-col h-full">
+          <ChatInterface className="h-full" />
         </div>
       </div>
     </div>

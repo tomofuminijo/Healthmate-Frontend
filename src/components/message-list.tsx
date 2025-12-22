@@ -11,13 +11,14 @@ interface MessageListProps {
 /**
  * MessageList コンポーネント
  * チャット履歴の表示とスクロール管理を行う
- * シンプルなスクロール表示（仮想化なし）
+ * 確実な自動スクロール機能付き
  */
 export const MessageList: React.FC<MessageListProps> = ({ 
   messages, 
   className 
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // デバッグログ
   console.log('📋 MessageList rendering:', {
@@ -51,20 +52,30 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages]);
 
   /**
-   * 新しいメッセージが追加されたときに自動スクロール
+   * 確実な自動スクロール実装
+   */
+  const scrollToBottom = React.useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      });
+      console.log('🔽 Scrolled to bottom using scrollIntoView');
+    }
+  }, []);
+
+  /**
+   * メッセージが変更されたときに自動スクロール
    */
   useEffect(() => {
-    if (scrollRef.current && messageItems.length > 0) {
-      // 最下部にスクロール
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messageItems.length]);
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   return (
     <div 
       ref={scrollRef}
       className={cn(
-        "flex-1 overflow-y-auto overflow-x-hidden",
+        "h-full overflow-y-auto overflow-x-hidden",
         "scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
         className
       )}
@@ -81,7 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         </div>
       ) : (
-        // メッセージリスト表示（仮想化なし）
+        // メッセージリスト表示
         <div className="p-4 space-y-2">
           {messageItems.map((item) => (
             <div key={item.id}>
@@ -98,6 +109,8 @@ export const MessageList: React.FC<MessageListProps> = ({
               )}
             </div>
           ))}
+          {/* 自動スクロール用の要素 */}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
       )}
     </div>
