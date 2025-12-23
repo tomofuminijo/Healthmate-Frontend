@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { MessageBubble } from './message-bubble';
 import { cn } from '@/lib/utils';
@@ -6,23 +6,41 @@ import { cn } from '@/lib/utils';
 interface MessageListProps {
   messages: Message[];
   className?: string;
+  // スクロール制御用の新しいプロパティ
+  onScrollToBottom?: () => void; // 最下部スクロール時のコールバック
+  scrollBehavior?: 'auto' | 'user-only' | 'ai-only'; // スクロール動作制御
 }
 
 /**
  * MessageList コンポーネント
  * チャット履歴の表示とスクロール管理を行う
- * 確実な自動スクロール機能付き
+ * ユーザーメッセージ送信時の上部表示スクロールとAIレスポンス時の非オートスクロール対応
  */
-export const MessageList: React.FC<MessageListProps> = ({ 
+export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({ 
   messages, 
-  className 
-}) => {
+  className,
+  onScrollToBottom,
+  scrollBehavior = 'auto'
+}, forwardedRef) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // forwardedRefとscrollRefを統合
+  React.useImperativeHandle(forwardedRef, () => scrollRef.current!, []);
+  
+  // スクロール制御用の状態
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [lastUserMessageId, setLastUserMessageId] = useState<string | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [scrollTimeout, setScrollTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // デバッグログ
   console.log('📋 MessageList rendering:', {
     messageCount: messages.length,
+    scrollBehavior,
+    isUserScrolling,
+    isAtBottom,
+    lastUserMessageId,
     messages: messages.map(m => ({ id: m.id, role: m.role, contentLength: m.content.length }))
   });
 
@@ -52,24 +70,155 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages]);
 
   /**
-   * 確実な自動スクロール実装
+   * スクロール位置の監視
    */
-  const scrollToBottom = React.useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'end'
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50; // 50px以内を最下部とみなす
+    
+    setIsAtBottom(isNearBottom);
+    
+    // ユーザーが手動でスクロールしているかを検出
+    if (!isNearBottom) {
+      setIsUserScrolling(true);
+      
+      // スクロール停止を検出するためのタイマー
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      
+      const timeout = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 1000); // 1秒間スクロールが停止したら手動スクロール終了とみなす
+      
+      setScrollTimeout(timeout);
+    } else {
+      setIsUserScrolling(false);
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+        setScrollTimeout(null);
+      }
+    }
+  }, [scrollTimeout]);
+
+  /**
+   * ユーザーメッセージを上部に表示するスクロール（要件6対応）
+   * アクセシビリティ対応: モーション軽減設定への対応
+   */
+  const scrollToUserMessage = useCallback((messageId: string) => {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement && scrollRef.current) {
+      console.log('👤 Scrolling to user message:', messageId);
+      
+      // モーション軽減設定を確認
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      
+      messageElement.scrollIntoView({ 
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'start' // メッセージを上部に表示
       });
-      console.log('🔽 Scrolled to bottom using scrollIntoView');
     }
   }, []);
 
   /**
-   * メッセージが変更されたときに自動スクロール
+   * 最下部への確実なスクロール
+   * アクセシビリティ対応: モーション軽減設定への対応
+   */
+  const scrollToBottom = useCallback((smooth: boolean = true) => {
+    if (messagesEndRef.current) {
+      // モーション軽減設定を確認
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const shouldUseSmooth = smooth && !prefersReducedMotion;
+      
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: shouldUseSmooth ? 'smooth' : 'auto',
+        block: 'end'
+      });
+      console.log('🔽 Scrolled to bottom:', shouldUseSmooth ? 'smooth' : 'instant');
+      
+      // コールバック実行
+      if (onScrollToBottom) {
+        onScrollToBottom();
+      }
+    }
+  }, [onScrollToBottom]);
+
+  /**
+   * ユーザーメッセージ送信時のスクロール制御（要件6対応）
    */
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    
+    // ユーザーメッセージの場合
+    if (lastMessage?.role === 'user' && lastMessage.id !== lastUserMessageId) {
+      console.log('👤 New user message detected:', lastMessage.id);
+      setLastUserMessageId(lastMessage.id);
+      
+      // 200ms以内でスムーズにスクロール（要件6.3）
+      setTimeout(() => {
+        scrollToUserMessage(lastMessage.id);
+      }, 50); // DOM更新を待つ
+    }
+  }, [messages, lastUserMessageId, scrollToUserMessage]);
+
+  /**
+   * AIレスポンス時の非オートスクロール制御（要件7対応）
+   */
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    
+    // AIメッセージの場合は自動スクロールしない（要件7.1）
+    if (lastMessage?.role === 'assistant') {
+      console.log('🤖 AI message detected, maintaining scroll position');
+      // スクロール位置を維持（要件7.3, 7.4）
+      return;
+    }
+  }, [messages]);
+
+  /**
+   * スクロール動作の制御
+   */
+  useEffect(() => {
+    if (scrollBehavior === 'user-only') {
+      // ユーザーメッセージのみスクロール
+      return;
+    }
+    
+    if (scrollBehavior === 'ai-only') {
+      // AIメッセージのみスクロール（通常は使用しない）
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant' && isAtBottom) {
+        scrollToBottom();
+      }
+      return;
+    }
+    
+    // autoモード: 従来の動作（最下部にいる場合のみ自動スクロール）
+    if (scrollBehavior === 'auto' && isAtBottom && !isUserScrolling) {
+      scrollToBottom();
+    }
+  }, [messages, scrollBehavior, isAtBottom, isUserScrolling, scrollToBottom]);
+
+  // スクロールイベントリスナーの設定
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement) return;
+
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      scrollElement.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+    };
+  }, [handleScroll, scrollTimeout]);
 
   return (
     <div 
@@ -105,7 +254,9 @@ export const MessageList: React.FC<MessageListProps> = ({
                 </div>
               ) : (
                 // メッセージ表示
-                <MessageBubble message={item.data} />
+                <div data-message-id={item.data.id}>
+                  <MessageBubble message={item.data} />
+                </div>
               )}
             </div>
           ))}
@@ -115,7 +266,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       )}
     </div>
   );
-};
+});
 
 /**
  * 同じ日かどうかを判定
@@ -148,3 +299,4 @@ function formatDateSeparator(date: Date): string {
     });
   }
 }
+MessageList.displayName = 'MessageList';

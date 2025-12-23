@@ -2,10 +2,11 @@ import React from 'react';
 import { MessageList } from './message-list';
 import { MessageInput } from './message-input';
 import { ErrorDisplay } from './error-display';
+import { ChatLayoutManager, ChatContentContainer } from './chat-layout-manager';
+import { ScrollToBottomButtonContainer } from './scroll-to-bottom-button';
 import { useChat } from '@/contexts/chat-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ErrorHandler, AppError } from '@/lib/error-handler';
-import { cn } from '@/lib/utils';
 
 interface ChatInterfaceProps {
   className?: string;
@@ -75,13 +76,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
 
   /**
    * メッセージ送信処理（実際のCoachAI API優先）
+   * 既存機能を完全に保持しつつ、新しいレイアウトシステムと統合
    */
   const handleSendMessage = async (content: string) => {
     console.log('🚀 handleSendMessage called:', {
       content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
       hasCurrentSession: !!currentChatSession,
       sessionId: currentChatSession?.id,
-      sessionMessageCount: currentChatSession?.messages?.length
+      sessionMessageCount: currentChatSession?.messages?.length,
+      hasMessages // 新しいレイアウトシステムの状態も記録
     });
 
     // エラー状態をクリア
@@ -128,8 +131,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           id: aiMessageId
         });
 
-        // React状態更新の完了を待つ（より長い待機時間）
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // React状態更新の完了を待つ（レイアウト遷移も考慮）
+        await new Promise(resolve => setTimeout(resolve, 350)); // 300ms遷移 + 50ms余裕
         
         console.log('⏰ State update wait completed, starting streaming...');
 
@@ -233,49 +236,67 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
     return currentChatSession.messages;
   }, [currentChatSession?.messages]);
 
+  /**
+   * メッセージが存在するかどうかの判定（改良版）
+   */
+  const hasMessages = React.useMemo(() => {
+    // より厳密な判定: 空のメッセージや無効なメッセージを除外
+    const validMessages = displayMessages.filter(message => 
+      message && 
+      message.content && 
+      message.content.trim().length > 0 &&
+      message.role && 
+      (message.role === 'user' || message.role === 'assistant')
+    );
+    
+    console.log('📊 Message validation:', {
+      totalMessages: displayMessages.length,
+      validMessages: validMessages.length,
+      hasMessages: validMessages.length > 0
+    });
+    
+    return validMessages.length > 0;
+  }, [displayMessages]);
+
   return (
-    <div 
-      className={cn(
-        "flex flex-col h-full bg-background",
-        className
-      )}
-      data-testid="chat-interface"
+    <ChatLayoutManager 
+      hasMessages={hasMessages}
+      className={className}
     >
-      {/* エラー表示エリア */}
-      {error && (
-        <div className="p-4 border-b">
-          <ErrorDisplay
-            error={error}
-            onRetry={error.retryable ? handleRetry : undefined}
-            onDismiss={handleDismissError}
-            compact
-          />
-        </div>
-      )}
-
-      {/* サービス状態表示 */}
-      {!serviceHealth.available && !error && (
-        <div className="p-4 border-b bg-yellow-50 dark:bg-yellow-950">
-          <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-            <span className="text-sm">
-              CoachAI サービスの状態を確認中...
-            </span>
+      {/* メインコンテナ: 既存機能のテスト互換性を保つ */}
+      <div data-testid="chat-interface">
+        {/* エラー表示エリア */}
+        {error && (
+          <div className="absolute top-0 left-0 right-0 z-50 p-4 border-b bg-background">
+            <ChatContentContainer>
+              <ErrorDisplay
+                error={error}
+                onRetry={error.retryable ? handleRetry : undefined}
+                onDismiss={handleDismissError}
+                compact
+              />
+            </ChatContentContainer>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* チャット履歴表示エリア - フレックスで残りスペースを占有 */}
-      <div className="flex-1 overflow-hidden">
-        <MessageList 
-          messages={displayMessages}
-          className="h-full"
-        />
-      </div>
+        {/* サービス状態表示 */}
+        {!serviceHealth.available && !error && (
+          <div className="absolute top-0 left-0 right-0 z-40 p-4 border-b bg-yellow-50 dark:bg-yellow-950">
+            <ChatContentContainer>
+              <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                <span className="text-sm">
+                  CoachAI サービスの状態を確認中...
+                </span>
+              </div>
+            </ChatContentContainer>
+          </div>
+        )}
 
-      {/* メッセージ入力エリア - 画面下部に固定 */}
-      <div className="flex-shrink-0">
-        <MessageInput
+        {/* メインチャットコンテンツ */}
+        <ChatInterfaceContent
+          displayMessages={displayMessages}
+          hasMessages={hasMessages}
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
           disabled={!serviceHealth.available && !!error}
@@ -286,6 +307,116 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           }
         />
       </div>
-    </div>
+    </ChatLayoutManager>
+  );
+};
+
+/**
+ * ChatInterfaceContent コンポーネント
+ * レイアウトモードに応じてチャットコンテンツを表示
+ * 既存機能を完全に保持しつつ、新しいレイアウトシステムと統合
+ */
+interface ChatInterfaceContentProps {
+  displayMessages: any[];
+  hasMessages: boolean;
+  onSendMessage: (message: string) => void;
+  isLoading: boolean;
+  disabled: boolean;
+  placeholder: string;
+}
+
+const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
+  displayMessages,
+  hasMessages,
+  onSendMessage,
+  isLoading,
+  disabled,
+  placeholder
+}) => {
+  const messageListRef = React.useRef<HTMLDivElement>(null);
+
+  const handleScrollToBottom = React.useCallback(() => {
+    console.log('📍 Scroll to bottom callback triggered');
+  }, []);
+
+  // エラーハンドリング: レイアウト遷移中の安全性確保
+  const safeOnSendMessage = React.useCallback((content: string) => {
+    try {
+      onSendMessage(content);
+    } catch (error) {
+      console.error('❌ Error in message sending:', error);
+      // エラーが発生してもUIを壊さない
+    }
+  }, [onSendMessage]);
+
+  return (
+    <>
+      {/* 空チャット状態: 中央配置のメッセージ入力 */}
+      {!hasMessages && (
+        <ChatContentContainer className="flex items-center justify-center min-h-0">
+          <div className="w-full max-w-2xl">
+            {/* ウェルカムメッセージ */}
+            <div className="text-center mb-8">
+              <div className="text-4xl mb-4">🏥</div>
+              <h1 className="text-2xl font-semibold text-foreground mb-2">
+                Healthmate AI コーチ
+              </h1>
+              <p className="text-muted-foreground">
+                健康について何でもお聞きください。パーソナライズされたアドバイスを提供します。
+              </p>
+            </div>
+            
+            {/* 中央配置のメッセージ入力 */}
+            <MessageInput
+              onSendMessage={safeOnSendMessage}
+              isLoading={isLoading}
+              disabled={disabled}
+              placeholder={placeholder}
+              layoutMode="empty"
+              className="rounded-xl shadow-lg"
+            />
+          </div>
+        </ChatContentContainer>
+      )}
+
+      {/* アクティブチャット状態: 通常のチャットレイアウト */}
+      {hasMessages && (
+        <>
+          {/* チャット履歴表示エリア */}
+          <div className="flex-1 overflow-hidden relative">
+            <ChatContentContainer className="h-full">
+              <MessageList 
+                ref={messageListRef}
+                messages={displayMessages}
+                className="h-full"
+                onScrollToBottom={handleScrollToBottom}
+                scrollBehavior="user-only" // ユーザーメッセージのみスクロール（要件6, 7対応）
+              />
+            </ChatContentContainer>
+            
+            {/* 最下部スクロールボタン */}
+            <ScrollToBottomButtonContainer
+              scrollContainerRef={messageListRef}
+              hasMessages={hasMessages}
+              onScrollToBottom={handleScrollToBottom}
+            />
+          </div>
+
+          {/* メッセージ入力エリア - 画面下部に固定 */}
+          <div className="flex-shrink-0 border-t bg-background">
+            <ChatContentContainer>
+              <MessageInput
+                onSendMessage={safeOnSendMessage}
+                isLoading={isLoading}
+                disabled={disabled}
+                placeholder={placeholder}
+                layoutMode="active"
+                className="border-0 bg-transparent"
+              />
+            </ChatContentContainer>
+          </div>
+        </>
+      )}
+    </>
   );
 };
