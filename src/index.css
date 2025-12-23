@@ -69,6 +69,87 @@
   }
 }
 
+/* アクセシビリティとレスポンシブデザイン用のカスタムスタイル */
+@layer utilities {
+  /* スクリーンリーダー専用テキスト */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* フォーカス時の高コントラスト表示 */
+  .focus-visible\:ring-high-contrast:focus-visible {
+    @apply ring-2 ring-blue-600 ring-offset-2;
+  }
+
+  /* タッチデバイス用の最小タップ領域 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* レスポンシブテキストサイズ */
+  .text-responsive-sm {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+  
+  .text-responsive-base {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+  }
+  
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+  }
+  
+  .text-responsive-xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  /* 高コントラストモード対応 */
+  @media (prefers-contrast: high) {
+    .high-contrast\:border-black {
+      border-color: black;
+    }
+    
+    .high-contrast\:text-black {
+      color: black;
+    }
+    
+    .high-contrast\:bg-white {
+      background-color: white;
+    }
+  }
+
+  /* 動きを減らす設定への対応 */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-reduce\:animate-none {
+      animation: none;
+    }
+    
+    .motion-reduce\:transition-none {
+      transition: none;
+    }
+  }
+
+  /* ダークモード対応の改善 */
+  @media (prefers-color-scheme: dark) {
+    .dark-auto\:bg-gray-900 {
+      background-color: rgb(17 24 39);
+    }
+    
+    .dark-auto\:text-gray-100 {
+      color: rgb(243 244 246);
+    }
+  }
+}
+
 /* カスタムスタイル */
 .chat-container {
   height: calc(100vh - 4rem);
@@ -76,4 +157,30 @@
 
 .message-list {
   height: calc(100% - 5rem);
+}
+
+/* フォーカス管理の改善 */
+.focus-trap {
+  outline: none;
+}
+
+.focus-trap:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ログインページ専用の中央配置強化 */
+.login-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh; /* 動的ビューポート高さ対応 */
+}
+
+/* iOS Safari対応 */
+@supports (-webkit-touch-callout: none) {
+  .login-page-container {
+    min-height: -webkit-fill-available;
+  }
 }
