@@ -9,8 +9,7 @@ import {
   classifyAuthError, 
   validateLoginCredentials, 
   AuthErrorType,
-  type AuthError,
-  type ValidationResult 
+  type AuthError
 } from '@/lib/auth-error-handler';
 
 export const LoginForm: React.FC = () => {
@@ -97,7 +96,10 @@ export const LoginForm: React.FC = () => {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark-auto:bg-gray-900">
-      <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg shadow-lg border-0 sm:border high-contrast:border-black focus-trap my-auto">
+      <Card 
+        variant="healthmate" 
+        className="w-full max-w-sm sm:max-w-md lg:max-w-lg high-contrast:border-black focus-trap my-auto"
+      >
         <BrandHeader size="lg" />
         <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
           <form 
@@ -132,11 +134,10 @@ export const LoginForm: React.FC = () => {
                 placeholder="ユーザー名を入力"
                 disabled={isFormLoading}
                 required
-                className="motion-reduce:transition-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-base sm:text-sm touch-target high-contrast:border-black high-contrast:bg-white"
+                className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
                 autoComplete="username"
                 aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
                 aria-invalid={validationErrors.length > 0 ? "true" : "false"}
-                tabIndex={1}
               />
             </div>
             
@@ -164,11 +165,10 @@ export const LoginForm: React.FC = () => {
                 placeholder="パスワードを入力"
                 disabled={isFormLoading}
                 required
-                className="motion-reduce:transition-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-base sm:text-sm touch-target high-contrast:border-black high-contrast:bg-white"
+                className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
                 autoComplete="current-password"
                 aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
                 aria-invalid={validationErrors.length > 0 ? "true" : "false"}
-                tabIndex={2}
               />
             </div>
 
@@ -230,9 +230,8 @@ export const LoginForm: React.FC = () => {
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 motion-reduce:transition-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-sm py-2.5 sm:py-2 touch-target high-contrast:bg-white high-contrast:text-black high-contrast:border-black" 
+              className="w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:shadow-lg transition-all duration-200 h-11 px-6 py-2.5 text-base rounded-md font-medium motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed touch-target high-contrast:bg-white high-contrast:text-black high-contrast:border-black" 
               disabled={isFormLoading || validationErrors.length > 0}
-              tabIndex={3}
               aria-describedby={isFormLoading ? "loading-status" : undefined}
             >
               {isFormLoading ? (

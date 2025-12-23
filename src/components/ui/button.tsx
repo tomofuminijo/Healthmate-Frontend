@@ -18,12 +18,23 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Healthmate専用バリアント
+        healthmate: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-md hover:shadow-lg transition-all duration-200",
+        healthmateOutline: "border-2 border-blue-600 text-blue-600 bg-transparent hover:bg-blue-600 hover:text-white focus:ring-blue-500 transition-all duration-200",
+        healthmateGhost: "text-blue-600 hover:bg-blue-50 hover:text-blue-700 focus:ring-blue-500 transition-all duration-200",
+        success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-md",
+        warning: "bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500 shadow-md",
+        error: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-md"
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        // Healthmate専用サイズ
+        healthmateSm: "h-9 px-3 py-2 text-sm rounded-md",
+        healthmate: "h-11 px-6 py-2.5 text-base rounded-md font-medium",
+        healthmateLg: "h-12 px-8 py-3 text-lg rounded-lg font-medium"
       },
     },
     defaultVariants: {

@@ -56,7 +56,7 @@
   - **Property 6: Accessibility Validation**
   - **Validates: Requirements 4.4, 4.5**
 
-- [ ] 5. デザインシステムの統合
+- [x] 5. デザインシステムの統合
   - shadcn/uiコンポーネントの適切な使用
   - 一貫したスタイリングの適用
   - カラーパレットとタイポグラフィの統一
@@ -66,12 +66,12 @@
   - **Property 7: Design Consistency Validation**
   - **Validates: Requirements 5.2, 5.3**
 
-- [ ] 6. Checkpoint - 基本機能の動作確認
+- [x] 6. Checkpoint - 基本機能の動作確認
   - 全ての基本機能が正常に動作することを確認
   - ユーザーが問題なくログインできることを確認
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. E2Eテストの実装
+- [x] 7. E2Eテストの実装
   - 完全なユーザージャーニーのテスト
   - 異なるブラウザでの動作確認
   - _Requirements: 全要件の統合テスト_
@@ -80,7 +80,7 @@
   - ログインからダッシュボードまでの完全フロー
   - 複数ブラウザでの動作確認
 
-- [ ] 8. パフォーマンス最適化
+- [x] 8. パフォーマンス最適化
   - コンポーネントの最適化
   - 不要なレンダリングの削除
   - バンドルサイズの確認
@@ -90,7 +90,7 @@
   - ページロード時間の測定
   - レンダリング性能の確認
 
-- [ ] 9. Final checkpoint - 全体テストと品質確認
+- [x] 9. Final checkpoint - 全体テストと品質確認
   - 全てのテストが通ることを確認
   - コードレビューの実施
   - 本番デプロイ準備の確認
