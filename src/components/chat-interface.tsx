@@ -382,8 +382,8 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
       {/* アクティブチャット状態: 通常のチャットレイアウト */}
       {hasMessages && (
         <>
-          {/* チャット履歴表示エリア */}
-          <div className="flex-1 overflow-hidden relative">
+          {/* チャット履歴表示エリア - 入力欄の高さを考慮 */}
+          <div className="flex-1 overflow-hidden relative pb-24">
             <ChatContentContainer className="h-full">
               <MessageList 
                 ref={messageListRef}
@@ -402,8 +402,8 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
             />
           </div>
 
-          {/* メッセージ入力エリア - 画面下部に固定 */}
-          <div className="flex-shrink-0 border-t bg-background">
+          {/* メッセージ入力エリア - 完全固定位置（サイドバー考慮） */}
+          <div className="fixed bottom-0 left-0 md:left-80 right-0 z-30 border-t bg-background">
             <ChatContentContainer>
               <MessageInput
                 onSendMessage={safeOnSendMessage}

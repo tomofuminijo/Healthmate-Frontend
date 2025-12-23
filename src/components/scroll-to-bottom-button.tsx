@@ -76,11 +76,11 @@ export const ScrollToBottomButton: React.FC<ScrollToBottomButtonProps> = ({
           // アニメーションは無効化
         ],
         
-        // 位置: チャット入力エリアの上（要件8.1）
-        "bottom-20 left-1/2 transform -translate-x-1/2",
+        // 位置: チャット入力エリアの上（要件8.1）- 固定入力欄を考慮
+        "bottom-28 left-1/2 transform -translate-x-1/2",
         
         // レスポンシブ対応
-        "sm:bottom-24", // デスクトップでは少し上に
+        "sm:bottom-32", // デスクトップでは少し上に
         
         className
       )}
