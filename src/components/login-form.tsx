@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -31,23 +31,58 @@ export const LoginForm: React.FC = () => {
   }, [isAuthenticated, navigate, location.state]);
 
   // エラーメッセージをクリアする（ユーザーが入力を開始したとき）
-  const clearErrors = () => {
+  const clearErrors = useCallback(() => {
     if (error) {
       setError(null);
     }
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
-  };
+  }, [error, validationErrors.length]);
 
-  // リアルタイムバリデーション
-  const validateInput = (usernameValue: string, passwordValue: string) => {
+  // リアルタイムバリデーション（デバウンス処理付き）
+  const validateInput = useCallback((usernameValue: string, passwordValue: string) => {
     const validation = validateLoginCredentials(usernameValue, passwordValue);
     setValidationErrors(validation.errors);
     return validation;
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // デバウンス処理付きバリデーション（改善版）
+  const debouncedValidation = useMemo(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    const debouncedFn = (usernameValue: string, passwordValue: string) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        if (usernameValue.trim() && passwordValue.trim()) {
+          validateInput(usernameValue, passwordValue);
+        }
+        timeoutId = null;
+      }, 300);
+    };
+
+    // クリーンアップ関数を追加
+    (debouncedFn as any).cancel = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    return debouncedFn as typeof debouncedFn & { cancel: () => void };
+  }, [validateInput]);
+
+  // デバウンスのクリーンアップ
+  useEffect(() => {
+    return () => {
+      // コンポーネントアンマウント時にタイマーをクリア
+      debouncedValidation.cancel();
+    };
+  }, [debouncedValidation]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setValidationErrors([]);
@@ -80,19 +115,107 @@ export const LoginForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [username, password, login, validateLoginCredentials]);
 
-  // ローディング状態の統合管理
-  const isFormLoading = isLoading || isSubmitting;
+  // ユーザー名変更ハンドラー（最適化）
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUsername(value);
+    clearErrors();
+    
+    // デバウンス処理付きバリデーション
+    if (value.trim() && password) {
+      debouncedValidation(value, password);
+    }
+  }, [password, clearErrors, debouncedValidation]);
 
-  // キーボードナビゲーション用のハンドラー
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // パスワード変更ハンドラー（最適化）
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    clearErrors();
+    
+    // デバウンス処理付きバリデーション
+    if (username.trim() && value) {
+      debouncedValidation(username, value);
+    }
+  }, [username, clearErrors, debouncedValidation]);
+
+  // ローディング状態の統合管理（メモ化）
+  const isFormLoading = useMemo(() => isLoading || isSubmitting, [isLoading, isSubmitting]);
+
+  // キーボードナビゲーション用のハンドラー（最適化）
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Enterキーでフォーム送信（ボタンにフォーカスがない場合）
     if (e.key === 'Enter' && e.target !== e.currentTarget) {
       e.preventDefault();
       handleSubmit(e as any);
     }
-  };
+  }, [handleSubmit]);
+
+  // エラー表示用のメモ化されたコンポーネント
+  const ValidationErrors = useMemo(() => {
+    if (validationErrors.length === 0) return null;
+    
+    return (
+      <div 
+        id="validation-errors"
+        className="text-sm text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-md high-contrast:border-black high-contrast:bg-white high-contrast:text-black"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div className="flex items-start space-x-2">
+          <span className="text-amber-600 flex-shrink-0 mt-0.5 high-contrast:text-black" aria-hidden="true">⚠️</span>
+          <div className="flex-1">
+            <p className="font-medium mb-1">入力内容を確認してください：</p>
+            <ul className="list-disc list-inside space-y-1">
+              {validationErrors.map((errorMsg, index) => (
+                <li key={index}>{errorMsg}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }, [validationErrors]);
+
+  // 認証エラー表示用のメモ化されたコンポーネント
+  const AuthError = useMemo(() => {
+    if (!error) return null;
+    
+    return (
+      <div 
+        className={`text-sm p-3 rounded-md high-contrast:border-black high-contrast:bg-white high-contrast:text-black ${
+          error.type === AuthErrorType.NETWORK_ERROR 
+            ? 'text-orange-700 bg-orange-50 border border-orange-200'
+            : 'text-red-700 bg-red-50 border border-red-200'
+        }`}
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div className="flex items-start space-x-2">
+          <span 
+            className={`flex-shrink-0 mt-0.5 high-contrast:text-black ${
+              error.type === AuthErrorType.NETWORK_ERROR ? 'text-orange-600' : 'text-red-600'
+            }`} 
+            aria-hidden="true"
+          >
+            {error.type === AuthErrorType.NETWORK_ERROR ? '🌐' : '❌'}
+          </span>
+          <div className="flex-1">
+            <p className="font-medium">{error.userFriendlyMessage}</p>
+            {error.retryable && (
+              <p className="text-xs mt-1 opacity-75">
+                しばらく待ってから再度お試しください
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }, [error]);
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark-auto:bg-gray-900">
@@ -123,14 +246,7 @@ export const LoginForm: React.FC = () => {
                 name="username"
                 type="text"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  clearErrors();
-                  // リアルタイムバリデーション（デバウンス不要、軽量な処理のため）
-                  if (e.target.value.trim() && password) {
-                    validateInput(e.target.value, password);
-                  }
-                }}
+                onChange={handleUsernameChange}
                 placeholder="ユーザー名を入力"
                 disabled={isFormLoading}
                 required
@@ -154,14 +270,7 @@ export const LoginForm: React.FC = () => {
                 name="password"
                 type="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  clearErrors();
-                  // リアルタイムバリデーション
-                  if (username.trim() && e.target.value) {
-                    validateInput(username, e.target.value);
-                  }
-                }}
+                onChange={handlePasswordChange}
                 placeholder="パスワードを入力"
                 disabled={isFormLoading}
                 required
@@ -173,60 +282,10 @@ export const LoginForm: React.FC = () => {
             </div>
 
             {/* バリデーションエラーの表示 */}
-            {validationErrors.length > 0 && (
-              <div 
-                id="validation-errors"
-                className="text-sm text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-md high-contrast:border-black high-contrast:bg-white high-contrast:text-black"
-                role="alert"
-                aria-live="polite"
-                aria-atomic="true"
-              >
-                <div className="flex items-start space-x-2">
-                  <span className="text-amber-600 flex-shrink-0 mt-0.5 high-contrast:text-black" aria-hidden="true">⚠️</span>
-                  <div className="flex-1">
-                    <p className="font-medium mb-1">入力内容を確認してください：</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {validationErrors.map((errorMsg, index) => (
-                        <li key={index}>{errorMsg}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
+            {ValidationErrors}
 
             {/* 認証エラーの表示 */}
-            {error && (
-              <div 
-                className={`text-sm p-3 rounded-md high-contrast:border-black high-contrast:bg-white high-contrast:text-black ${
-                  error.type === AuthErrorType.NETWORK_ERROR 
-                    ? 'text-orange-700 bg-orange-50 border border-orange-200'
-                    : 'text-red-700 bg-red-50 border border-red-200'
-                }`}
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-              >
-                <div className="flex items-start space-x-2">
-                  <span 
-                    className={`flex-shrink-0 mt-0.5 high-contrast:text-black ${
-                      error.type === AuthErrorType.NETWORK_ERROR ? 'text-orange-600' : 'text-red-600'
-                    }`} 
-                    aria-hidden="true"
-                  >
-                    {error.type === AuthErrorType.NETWORK_ERROR ? '🌐' : '❌'}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium">{error.userFriendlyMessage}</p>
-                    {error.retryable && (
-                      <p className="text-xs mt-1 opacity-75">
-                        しばらく待ってから再度お試しください
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            {AuthError}
 
             <Button 
               type="submit" 

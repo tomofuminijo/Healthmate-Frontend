@@ -11,6 +11,22 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React関連を分離
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // UI関連を分離
+          'ui-vendor': ['@radix-ui/react-slot', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+          // 認証関連を分離
+          'auth-vendor': ['aws-amplify']
+        }
+      }
+    },
+    // チャンクサイズ警告の閾値を調整
+    chunkSizeWarningLimit: 600
+  },
   server: {
     port: 3000,
     // CoachAI APIは直接AgentCore Runtimeエンドポイントに接続するため、プロキシは不要
