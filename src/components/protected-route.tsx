@@ -25,9 +25,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // 未認証の場合はログインページにリダイレクト
+  // 未認証の場合はサインインページにリダイレクト
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // 認証済みの場合は子コンポーネントを表示

@@ -30,9 +30,9 @@ async function runChatIntegrationTest() {
   const page = await context.newPage();
 
   try {
-    // 1. ログインページにアクセス
-    console.log('📝 Step 1: ログインページにアクセス');
-    await page.goto(`${TEST_CONFIG.baseUrl}/login`);
+    // 1. サインインページにアクセス
+    console.log('📝 Step 1: サインインページにアクセス');
+    await page.goto(`${TEST_CONFIG.baseUrl}/signin`);
     await page.waitForLoadState('networkidle');
 
     // 2. ログイン実行

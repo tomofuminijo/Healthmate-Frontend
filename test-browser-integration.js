@@ -23,22 +23,22 @@ const CONFIG = {
 /**
  * ログインページの確認
  */
-async function testLoginPage() {
-  console.log('🔐 ログインページの確認...');
+async function testSignInPage() {
+  console.log('🔐 サインインページの確認...');
   
   try {
-    const response = await fetch(`${CONFIG.frontendUrl}/login`);
+    const response = await fetch(`${CONFIG.frontendUrl}/signin`);
     if (response.ok) {
       const html = await response.text();
       
-      // ログインフォームの存在確認
-      const hasLoginForm = html.includes('ユーザー名') && html.includes('パスワード');
+      // サインインフォームの存在確認
+      const hasSignInForm = html.includes('ユーザー名') && html.includes('パスワード');
       const hasCognitoConfig = html.includes('us-west-2_tykFYGwK7');
       
-      if (hasLoginForm) {
-        console.log('   ✅ ログインフォームが正常に表示されています');
+      if (hasSignInForm) {
+        console.log('   ✅ サインインフォームが正常に表示されています');
       } else {
-        console.log('   ❌ ログインフォームが見つかりません');
+        console.log('   ❌ サインインフォームが見つかりません');
         return false;
       }
       
@@ -238,7 +238,7 @@ async function main() {
   
   const tests = [
     { name: 'サーバー情報取得', fn: getServerInfo },
-    { name: 'ログインページ', fn: testLoginPage },
+    { name: 'サインインページ', fn: testSignInPage },
     { name: 'ダッシュボード保護', fn: testDashboardPage },
     { name: 'ルートリダイレクト', fn: testRootRedirect },
     { name: '静的アセット', fn: testStaticAssets },

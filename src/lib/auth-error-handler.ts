@@ -26,11 +26,11 @@ const ERROR_MESSAGES = {
   [AuthErrorType.INVALID_CREDENTIALS]: 'ユーザー名またはパスワードが正しくありません',
   [AuthErrorType.NETWORK_ERROR]: 'ネットワークエラーが発生しました。しばらく後でお試しください',
   [AuthErrorType.VALIDATION_ERROR]: 'ユーザー名とパスワードを入力してください',
-  [AuthErrorType.TOKEN_EXPIRED]: 'セッションが期限切れです。再度ログインしてください',
+  [AuthErrorType.TOKEN_EXPIRED]: 'セッションが期限切れです。再度サインインしてください',
   [AuthErrorType.USER_NOT_FOUND]: 'ユーザー名またはパスワードが正しくありません',
   [AuthErrorType.ACCOUNT_LOCKED]: 'アカウントがロックされています。しばらく後でお試しください',
-  [AuthErrorType.TOO_MANY_ATTEMPTS]: 'ログイン試行回数が上限に達しました。しばらく後でお試しください',
-  [AuthErrorType.UNKNOWN_ERROR]: 'ログインに失敗しました。しばらく後でお試しください'
+  [AuthErrorType.TOO_MANY_ATTEMPTS]: 'サインイン試行回数が上限に達しました。しばらく後でお試しください',
+  [AuthErrorType.UNKNOWN_ERROR]: 'サインインに失敗しました。しばらく後でお試しください'
 } as const;
 
 /**
@@ -131,7 +131,7 @@ export interface ValidationResult {
   errors: string[];
 }
 
-export function validateLoginCredentials(username: string, password: string): ValidationResult {
+export function validateSignInCredentials(username: string, password: string): ValidationResult {
   const errors: string[] = [];
 
   // ユーザー名のバリデーション

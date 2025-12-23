@@ -7,7 +7,7 @@ interface AuthContextType {
   authSession: AuthSession | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   getJwtToken: () => Promise<string | null>;
   refreshToken: () => Promise<void>;
@@ -92,9 +92,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
   };
 
   /**
-   * ユーザーログイン
+   * ユーザーサインイン
    */
-  const login = async (username: string, password: string): Promise<void> => {
+  const signIn = async (username: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
       
@@ -103,9 +103,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       AuthSessionManager.saveAuthSession(newAuthSession);
       setAuthSession(newAuthSession);
       
-      console.log('Login successful, auth session set:', newAuthSession.username);
+      console.log('Sign in successful, auth session set:', newAuthSession.username);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Sign in failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
     authSession,
     isAuthenticated,
     isLoading,
-    login,
+    signIn,
     logout,
     getJwtToken,
     refreshToken,

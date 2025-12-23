@@ -51,7 +51,7 @@ export const BrandHeader: React.FC<BrandHeaderProps> = React.memo(({
           className={descriptionClasses}
           role="doc-subtitle"
         >
-          健康管理プラットフォームにログイン
+          健康管理プラットフォームにサインイン
         </CardDescription>
       )}
     </CardHeader>

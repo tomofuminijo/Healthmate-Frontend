@@ -7,18 +7,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BrandHeader } from '@/components/brand-header';
 import { 
   classifyAuthError, 
-  validateLoginCredentials, 
+  validateSignInCredentials, 
   AuthErrorType,
   type AuthError
 } from '@/lib/auth-error-handler';
 
-export const LoginForm: React.FC = () => {
+export const SignInForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<AuthError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isLoading, isAuthenticated } = useAuth();
+  const { signIn, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,7 +42,7 @@ export const LoginForm: React.FC = () => {
 
   // リアルタイムバリデーション（デバウンス処理付き）
   const validateInput = useCallback((usernameValue: string, passwordValue: string) => {
-    const validation = validateLoginCredentials(usernameValue, passwordValue);
+    const validation = validateSignInCredentials(usernameValue, passwordValue);
     setValidationErrors(validation.errors);
     return validation;
   }, []);
@@ -90,17 +90,17 @@ export const LoginForm: React.FC = () => {
 
     try {
       // 入力バリデーション
-      const validation = validateLoginCredentials(username, password);
+      const validation = validateSignInCredentials(username, password);
       if (!validation.isValid) {
         setValidationErrors(validation.errors);
         return;
       }
 
-      // ログイン実行
-      await login(username.trim(), password);
+      // サインイン実行
+      await signIn(username.trim(), password);
       // リダイレクトはuseEffectで処理される
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Sign in error:', error);
       
       // エラーを分類して適切なメッセージを表示
       const authError = classifyAuthError(error);
@@ -115,7 +115,7 @@ export const LoginForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [username, password, login, validateLoginCredentials]);
+  }, [username, password, signIn, validateSignInCredentials]);
 
   // ユーザー名変更ハンドラー（最適化）
   const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,7 +231,7 @@ export const LoginForm: React.FC = () => {
             onKeyDown={handleKeyDown}
             noValidate
             role="form"
-            aria-label="ログインフォーム"
+            aria-label="サインインフォーム"
           >
             <div className="space-y-2">
               <label 
@@ -297,18 +297,18 @@ export const LoginForm: React.FC = () => {
                 <>
                   <div className="motion-reduce:animate-none animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 high-contrast:border-black" aria-hidden="true"></div>
                   <span id="loading-status">
-                    {isSubmitting ? 'ログイン中...' : '処理中...'}
+                    {isSubmitting ? 'サインイン中...' : '処理中...'}
                   </span>
                 </>
               ) : (
-                'ログイン'
+                'サインイン'
               )}
             </Button>
           </form>
 
           {/* スクリーンリーダー用の追加情報 */}
           <div className="sr-only" aria-live="polite" aria-atomic="true">
-            {isFormLoading && "ログイン処理を実行中です。しばらくお待ちください。"}
+            {isFormLoading && "サインイン処理を実行中です。しばらくお待ちください。"}
             {error && `エラーが発生しました: ${error.userFriendlyMessage}`}
             {validationErrors.length > 0 && `入力エラーが${validationErrors.length}件あります。`}
           </div>

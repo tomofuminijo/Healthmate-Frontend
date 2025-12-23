@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from '@/contexts/auth-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { ProtectedRoute } from '@/components/protected-route';
-import { LoginForm } from '@/components/login-form';
+import { SignInForm } from '@/components/sign-in-form';
 import { ChatInterface } from '@/components/chat-interface';
 import { ErrorBoundary } from '@/components/error-display';
 import { MobileSidebar, DesktopSidebar } from '@/components/mobile-sidebar';
@@ -132,7 +132,10 @@ function App() {
         <AuthProvider cognitoConfig={config.cognito}>
           <ChatProvider>
             <Routes>
-              <Route path="/login" element={<LoginForm />} />
+              <Route path="/signin" element={<SignInForm />} />
+              <Route path="/sign-in" element={<SignInForm />} />
+              {/* 後方互換性のため /login も残す */}
+              <Route path="/login" element={<SignInForm />} />
               <Route 
                 path="/dashboard" 
                 element={

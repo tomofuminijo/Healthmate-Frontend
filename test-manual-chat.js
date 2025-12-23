@@ -25,10 +25,10 @@ async function openTestBrowser() {
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // ログインページを開く
-  await page.goto('http://localhost:3000/login');
+  // サインインページを開く
+  await page.goto('http://localhost:3000/signin');
   
-  console.log('✅ ブラウザが開きました: http://localhost:3000/login');
+  console.log('✅ ブラウザが開きました: http://localhost:3000/signin');
   console.log('⌨️  手動でテストを実行してください');
   console.log('🔍 開発者ツールのコンソールタブでログを確認してください');
   console.log('');
