@@ -67,7 +67,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
 
     onSendMessage(trimmedMessage);
-    setMessage('');
+    setMessage(''); // これによりuseEffectでリセット処理が実行される
     
     // フォーカスを維持
     setTimeout(() => {
@@ -126,6 +126,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
   };
+
+  /**
+   * テキストエリアの高さを初期状態にリセット
+   */
+  const resetTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      // 空の状態での最小高さを設定
+      const minHeight = actualLayoutMode === 'empty' ? 56 : 44;
+      textareaRef.current.style.height = `${minHeight}px`;
+    }
+  };
+
+  // メッセージがクリアされた時に高さをリセット
+  React.useEffect(() => {
+    if (message === '') {
+      resetTextareaHeight();
+    }
+  }, [message, actualLayoutMode]);
 
   const canSend = message.trim().length > 0 && !isLoading && !disabled;
 
