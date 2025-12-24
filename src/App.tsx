@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
 import { useChat } from '@/contexts/chat-context';
+import { useEdgeSwipeGesture } from '@/hooks/use-swipe-gesture';
 
 // 設定の検証
 validateConfig();
@@ -29,6 +30,17 @@ const ChatTestScreen: React.FC = () => {
     deleteChatSession,
     isLoading
   } = useChat();
+
+  // スワイプジェスチャーでサイドバーを開く
+  useEdgeSwipeGesture({
+    onEdgeSwipeRight: () => {
+      console.log('🖐️ Edge swipe detected - opening sidebar');
+      const event = new CustomEvent('toggleMobileSidebar');
+      window.dispatchEvent(event);
+    },
+    edgeThreshold: 30, // 画面左端30px以内からのスワイプ
+    swipeThreshold: 80  // 80px以上のスワイプで反応
+  });
 
   // チャットセッション状態のログ出力
   React.useEffect(() => {

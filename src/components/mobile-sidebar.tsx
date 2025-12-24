@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
 
 interface ChatSession {
   id: string;
@@ -61,6 +62,16 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       window.removeEventListener('toggleMobileSidebar', handleToggle);
     };
   }, []);
+
+  // サイドバー内での左スワイプで閉じる
+  useSwipeGesture({
+    onSwipeLeft: () => {
+      if (isOpen) {
+        console.log('🖐️ Swipe left detected - closing sidebar');
+        setIsOpen(false);
+      }
+    }
+  });
 
   // モバイルサイドバーが開いている時は背景スクロールを無効化
   useEffect(() => {
