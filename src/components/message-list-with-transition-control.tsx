@@ -31,15 +31,6 @@ export const MessageListWithTransitionControl = React.forwardRef<
   const { isTransitioning, isActiveMode, prefersReducedMotion } = useChatLayout();
   const internalRef = React.useRef<HTMLDivElement>(null);
 
-  // デバッグログ
-  console.log('🎭 MessageListWithTransitionControl:', {
-    isTransitioning,
-    isActiveMode,
-    prefersReducedMotion,
-    messageCount: messages.length,
-    shouldShow: !isTransitioning && isActiveMode
-  });
-
   // レイアウト遷移完了後にのみ表示
   const shouldShowMessages = !isTransitioning && isActiveMode;
 

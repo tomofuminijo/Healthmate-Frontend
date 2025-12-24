@@ -266,25 +266,13 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
   React.useEffect(() => {
     const scrollElement = scrollContainerRef.current;
     
-    console.log('📍 ScrollToBottomButtonContainer setup:', {
-      hasScrollElement: !!scrollElement,
-      hasMessages,
-      scrollElementType: scrollElement?.constructor?.name,
-      isRealDOMElement: scrollElement instanceof HTMLElement,
-      hasAddEventListener: typeof scrollElement?.addEventListener === 'function',
-      elementTagName: scrollElement?.tagName,
-      elementClassName: scrollElement?.className
-    });
-    
     if (!scrollElement || !hasMessages) {
-      console.log('❌ No scroll element or no messages:', { hasScrollElement: !!scrollElement, hasMessages });
       setIsVisible(false);
       return;
     }
 
     // DOM要素かどうかを確認
     if (typeof scrollElement.addEventListener !== 'function') {
-      console.warn('❌ scrollElement is not a real DOM element');
       setIsVisible(false);
       return;
     }
@@ -320,17 +308,6 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       // いずれかの条件でスクロール可能と判定（ビューポートベースを優先）
       const isScrollable = contentOverflowsViewport || elementTooTallForViewport || basicScrollable || contentOverflowsParent || canActuallyScroll;
       
-      // 最下部判定の詳細ログ
-      console.log('🔍 Bottom detection:', {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        distanceFromBottom,
-        isAtTop: scrollTop === 0,
-        isAtBottom: distanceFromBottom <= 100,
-        heightsEqual: scrollHeight === clientHeight
-      });
-      
       // 特別なケース: scrollHeight === clientHeight の場合
       // この場合、要素自体がコンテンツ全体の高さに拡張されているが、
       // 実際にはビューポートの制約でスクロールが必要
@@ -338,7 +315,6 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       if (scrollHeight === clientHeight && elementTooTallForViewport) {
         // 要素がビューポートより大きい場合は、常に最上部にいるとみなす
         isNearBottom = false;
-        console.log('🔍 Special case: Element height equals scroll height but overflows viewport');
       } else {
         isNearBottom = distanceFromBottom <= 100;
       }
@@ -347,27 +323,6 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       const shouldShow = isScrollable && !isNearBottom;
       
       // デバッグ情報を出力（分割して確実に表示）
-      console.log('🔍 Scroll check - Part 1:', {
-        scrollHeight,
-        clientHeight,
-        elementHeight: rect.height,
-        viewportHeight
-      });
-      
-      console.log('🔍 Scroll check - Part 2:', {
-        elementTooTallForViewport,
-        contentOverflowsViewport,
-        basicScrollable,
-        canActuallyScroll
-      });
-      
-      console.log('🔍 Scroll check - Part 3:', {
-        finalIsScrollable: isScrollable,
-        isNearBottom,
-        distanceFromBottom,
-        shouldShow
-      });
-      
       setIsVisible(shouldShow);
     };
 
@@ -439,33 +394,18 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
   const handleScrollToBottom = () => {
     const scrollElement = scrollContainerRef.current;
     
-    console.log('🔍 Scroll element details:', {
-      hasScrollElement: !!scrollElement,
-      scrollElement,
-      scrollTop: scrollElement?.scrollTop,
-      scrollHeight: scrollElement?.scrollHeight,
-      clientHeight: scrollElement?.clientHeight,
-      tagName: scrollElement?.tagName,
-      className: scrollElement?.className,
-      hasScrollToBottomMethod: typeof (scrollElement as any)?.scrollToBottom === 'function'
-    });
-    
     if (!scrollElement) {
-      console.warn('❌ No scroll element found');
       return;
     }
 
     // MessageListのscrollToBottomメソッドを直接呼び出し
     if (typeof (scrollElement as any).scrollToBottom === 'function') {
-      console.log('🎯 Calling MessageList.scrollToBottom method');
       (scrollElement as any).scrollToBottom(true);
       onScrollToBottom();
       return;
     }
 
     // フォールバック: 従来の方法
-    console.log('🔄 Using fallback scroll method');
-    
     // モーション軽減設定を確認
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -481,12 +421,9 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
         behavior: prefersReducedMotion ? 'auto' : 'smooth'
       });
       
-      console.log('✅ Method 1 (scrollTo) executed with target:', targetScrollTop);
-      
       // 方法2: scrollTopを直接設定（確実にするため）
       setTimeout(() => {
         scrollElement.scrollTop = targetScrollTop;
-        console.log('✅ Method 2 (scrollTop) executed as confirmation');
       }, prefersReducedMotion ? 50 : 300);
       
     } catch (error) {
@@ -494,8 +431,6 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       // 最後の手段：scrollTopを直接設定
       scrollElement.scrollTop = scrollElement.scrollHeight;
     }
-
-    console.log('⬇️ Scrolled to bottom:', prefersReducedMotion ? 'instant' : 'smooth');
 
     // コールバック実行
     onScrollToBottom();

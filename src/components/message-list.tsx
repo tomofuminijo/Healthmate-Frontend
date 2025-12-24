@@ -36,9 +36,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
         if (messagesEndRef.current) {
           const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           
-          console.log('📏 Direct max scroll approach');
-          
-          // 直接最大スクロール位置に移動（scrollIntoViewは使用しない）
+          // 直接最大スクロール位置に移動
           setTimeout(() => {
             // 実際のスクロール可能な要素を見つける
             let scrollableElement = element;
@@ -66,11 +64,6 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
               } else {
                 scrollableElement.scrollTop = maxScrollTop;
               }
-              console.log('📏 Element scroll to max:', {
-                maxScrollTop,
-                actualScrollTop: scrollableElement.scrollTop,
-                tagName: scrollableElement.tagName
-              });
             }
             
             // ページレベルでの最大スクロール
@@ -84,13 +77,9 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
               } else {
                 window.scrollTo(0, maxPageScroll);
               }
-              console.log('📏 Page scroll to max:', {
-                maxPageScroll,
-                actualScrollY: window.scrollY
-              });
             }
             
-          }, 50); // 短い遅延で即座に実行
+          }, 50);
           
           // コールバック実行
           if (onScrollToBottom) {

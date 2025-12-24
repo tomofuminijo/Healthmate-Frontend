@@ -337,7 +337,7 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
   const messageListRef = React.useRef<HTMLDivElement>(null);
 
   const handleScrollToBottom = React.useCallback(() => {
-    console.log('📍 Scroll to bottom callback triggered');
+    // スクロール完了時のコールバック（必要に応じて処理を追加）
   }, []);
 
   // エラーハンドリング: レイアウト遷移中の安全性確保
