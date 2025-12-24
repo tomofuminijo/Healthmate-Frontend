@@ -1,6 +1,6 @@
 import React from 'react';
-import { MessageList } from './message-list';
 import { MessageListWithTransitionControl } from './message-list-with-transition-control';
+import { EmptyStateWithTransitionControl } from './empty-state-with-transition-control';
 import { MessageInput } from './message-input';
 import { ErrorDisplay } from './error-display';
 import { ChatLayoutManager, ChatContentContainer } from './chat-layout-manager';
@@ -354,30 +354,12 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
     <>
       {/* 空チャット状態: 中央配置のメッセージ入力 */}
       {!hasMessages && (
-        <ChatContentContainer className="flex items-center justify-center min-h-0">
-          <div className="w-full max-w-2xl">
-            {/* ウェルカムメッセージ */}
-            <div className="text-center mb-8">
-              <div className="text-4xl mb-4">🏥</div>
-              <h1 className="text-2xl font-semibold text-foreground mb-2">
-                Healthmate AI コーチ
-              </h1>
-              <p className="text-muted-foreground">
-                健康について何でもお聞きください。パーソナライズされたアドバイスを提供します。
-              </p>
-            </div>
-            
-            {/* 中央配置のメッセージ入力 */}
-            <MessageInput
-              onSendMessage={safeOnSendMessage}
-              isLoading={isLoading}
-              disabled={disabled}
-              placeholder={placeholder}
-              layoutMode="empty"
-              className="rounded-xl shadow-lg"
-            />
-          </div>
-        </ChatContentContainer>
+        <EmptyStateWithTransitionControl
+          onSendMessage={safeOnSendMessage}
+          isLoading={isLoading}
+          disabled={disabled}
+          placeholder={placeholder}
+        />
       )}
 
       {/* アクティブチャット状態: 通常のチャットレイアウト */}
