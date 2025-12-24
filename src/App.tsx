@@ -2,20 +2,18 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ChatProvider } from '@/contexts/chat-context';
+import { EnvironmentProvider } from '@/components/providers/EnvironmentProvider';
 import { ProtectedRoute } from '@/components/protected-route';
 import { SignInForm } from '@/components/sign-in-form';
 import { ChatInterface } from '@/components/chat-interface';
 import { ErrorBoundary } from '@/components/error-display';
 import { MobileSidebar, DesktopSidebar } from '@/components/mobile-sidebar';
-import { config, validateConfig } from '@/lib/config';
+import { config } from '@/config/environment';
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
 import { useChat } from '@/contexts/chat-context';
 import { useEdgeSwipeGesture } from '@/hooks/use-swipe-gesture';
-
-// 設定の検証
-validateConfig();
 
 /**
  * チャットテスト画面コンポーネント
@@ -186,27 +184,29 @@ const Dashboard: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <AuthProvider cognitoConfig={config.cognito}>
-          <ChatProvider>
-            <Routes>
-              <Route path="/signin" element={<SignInForm />} />
-              <Route path="/sign-in" element={<SignInForm />} />
-              {/* 後方互換性のため /login も残す */}
-              <Route path="/login" element={<SignInForm />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </ChatProvider>
-        </AuthProvider>
-      </Router>
+      <EnvironmentProvider>
+        <Router>
+          <AuthProvider cognitoConfig={config.cognito}>
+            <ChatProvider>
+              <Routes>
+                <Route path="/signin" element={<SignInForm />} />
+                <Route path="/sign-in" element={<SignInForm />} />
+                {/* 後方互換性のため /login も残す */}
+                <Route path="/login" element={<SignInForm />} />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </ChatProvider>
+          </AuthProvider>
+        </Router>
+      </EnvironmentProvider>
     </ErrorBoundary>
   );
 }

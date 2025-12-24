@@ -28,7 +28,13 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   // forwardedRefとscrollRefを統合し、scrollToBottomメソッドを公開
   React.useImperativeHandle(forwardedRef, () => {
     const element = scrollRef.current;
-    if (!element) return null;
+    if (!element) {
+      // nullを返すのではなく、ダミーのHTMLDivElementを返す
+      const dummy = document.createElement('div');
+      return Object.assign(dummy, {
+        scrollToBottom: () => {}
+      });
+    }
     
     // DOM要素のプロパティとメソッドをコピーし、カスタムメソッドを追加
     return Object.assign(element, {
@@ -39,7 +45,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
           // 直接最大スクロール位置に移動
           setTimeout(() => {
             // 実際のスクロール可能な要素を見つける
-            let scrollableElement = element;
+            let scrollableElement: HTMLElement = element;
             let parent = element.parentElement;
             
             while (parent && parent !== document.body) {
@@ -97,8 +103,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   const [scrollTimeout, setScrollTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // デバッグログ
-  const messageCount = messages.length;
-  const hasValidMessages = messageCount > 0;
+  console.log('MessageList render:', { messageCount: messages.length });
 
   // メッセージを日付区切りと共に処理
   const messageItems = React.useMemo(() => {
