@@ -29,6 +29,8 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: '0.0.0.0', // 外部からのアクセスを許可
+    https: false, // HTTPSが必要な場合は true に変更
     // CoachAI APIは直接AgentCore Runtimeエンドポイントに接続するため、プロキシは不要
   },
   test: {
