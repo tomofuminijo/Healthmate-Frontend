@@ -73,7 +73,7 @@ const ChatTestScreen: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background overflow-hidden">
       {/* モバイルサイドバー - アプリケーション全体のトップレベルに配置 */}
       <MobileSidebar
         chatSessions={chatSessions}
@@ -84,10 +84,13 @@ const ChatTestScreen: React.FC = () => {
         authSession={authSession || undefined}
       />
 
-      {/* ヘッダー */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
+      {/* ヘッダー - Fixed Position で完全分離 */}
+      <div 
+        className="fixed top-0 left-0 right-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        style={{ height: '73px' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 py-3 h-full">
+          <div className="flex justify-between items-center h-full">
             <div className="flex items-center gap-4">
               {/* モバイルハンバーガーメニューボタン - ヘッダー内に配置 */}
               <Button
@@ -125,12 +128,20 @@ const ChatTestScreen: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <div className="flex-1 relative">
+
+      {/* メインコンテンツエリア - ヘッダー下に配置 */}
+      <div 
+        className="relative"
+        style={{ 
+          marginTop: '73px',
+          height: 'calc(100vh - 73px)'
+        }}
+      >
         {/* デスクトップサイドバー - Fixed Position で完全分離 */}
         <div 
-          className="hidden md:block fixed left-0 top-[73px] w-80 bg-muted/20 border-r z-10"
+          className="hidden md:block fixed left-0 w-80 bg-muted/20 border-r z-10"
           style={{ 
+            top: '73px',
             height: 'calc(100vh - 73px)',
             overflowY: 'auto',
             overscrollBehavior: 'contain'
