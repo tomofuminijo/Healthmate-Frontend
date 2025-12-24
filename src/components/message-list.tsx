@@ -25,8 +25,48 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // forwardedRefとscrollRefを統合
-  React.useImperativeHandle(forwardedRef, () => scrollRef.current!, []);
+  // forwardedRefとscrollRefを統合し、scrollToBottomメソッドを公開
+  React.useImperativeHandle(forwardedRef, () => {
+    const element = scrollRef.current;
+    if (!element) return null;
+    
+    // DOM要素のプロパティとメソッドをコピーし、カスタムメソッドを追加
+    return Object.assign(element, {
+      scrollToBottom: (smooth: boolean = true) => {
+        // 直接messagesEndRefを使用してスクロール
+        if (messagesEndRef.current) {
+          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          
+          // 方法1: scrollIntoViewを使用
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: prefersReducedMotion || !smooth ? 'auto' : 'smooth',
+            block: 'end'
+          });
+          
+          // 方法2: 確実にするため、少し遅延してscrollTopを直接設定
+          setTimeout(() => {
+            if (element && element.scrollHeight > element.clientHeight) {
+              const maxScroll = element.scrollHeight - element.clientHeight;
+              const extraScroll = 200; // 入力欄の高さ分を考慮して増加
+              element.scrollTop = maxScroll + extraScroll;
+            }
+          }, smooth && !prefersReducedMotion ? 400 : 100); // タイミングを調整
+          
+          // 方法3: さらに確実にするため、もう一度遅延実行
+          setTimeout(() => {
+            if (element) {
+              element.scrollTop = element.scrollHeight; // 最大まで確実にスクロール
+            }
+          }, smooth && !prefersReducedMotion ? 600 : 200);
+          
+          // コールバック実行
+          if (onScrollToBottom) {
+            onScrollToBottom();
+          }
+        }
+      }
+    });
+  }, [onScrollToBottom]); // scrollToBottomを依存配列から削除
   
   // スクロール制御用の状態
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -35,14 +75,8 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   const [scrollTimeout, setScrollTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // デバッグログ
-  console.log('📋 MessageList rendering:', {
-    messageCount: messages.length,
-    scrollBehavior,
-    isUserScrolling,
-    isAtBottom,
-    lastUserMessageId,
-    messages: messages.map(m => ({ id: m.id, role: m.role, contentLength: m.content.length }))
-  });
+  const messageCount = messages.length;
+  const hasValidMessages = messageCount > 0;
 
   // メッセージを日付区切りと共に処理
   const messageItems = React.useMemo(() => {
@@ -155,7 +189,6 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     
     // ユーザーメッセージの場合
     if (lastMessage?.role === 'user' && lastMessage.id !== lastUserMessageId) {
-      console.log('👤 New user message detected:', lastMessage.id);
       setLastUserMessageId(lastMessage.id);
       
       // 200ms以内でスムーズにスクロール（要件6.3）
@@ -175,7 +208,6 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     
     // AIメッセージの場合は自動スクロールしない（要件7.1）
     if (lastMessage?.role === 'assistant') {
-      console.log('🤖 AI message detected, maintaining scroll position');
       // スクロール位置を維持（要件7.3, 7.4）
       return;
     }
