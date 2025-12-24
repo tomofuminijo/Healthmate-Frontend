@@ -44,7 +44,6 @@ async function testCoachAIConnection() {
     sessionState: {
       sessionAttributes: {
         session_id: CONFIG.sessionId,
-        jwt_token: CONFIG.testJwtToken,
         timezone: "Asia/Tokyo",
         language: "ja"
       }
@@ -135,7 +134,6 @@ async function testHealthCheck() {
         sessionState: {
           sessionAttributes: {
             session_id: "health-check-session",
-            jwt_token: "test-token",
             timezone: "Asia/Tokyo",
             language: "ja"
           }

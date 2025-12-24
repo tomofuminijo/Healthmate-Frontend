@@ -58,7 +58,6 @@ export async function sendChatMessage(
       sessionState: {
         sessionAttributes: {
           session_id: request.sessionId,
-          jwt_token: jwtToken,
           timezone: request.timezone || 'Asia/Tokyo',
           language: request.language || 'ja'
         }
@@ -191,7 +190,6 @@ export async function* streamChatMessage(
       sessionState: {
         sessionAttributes: {
           session_id: request.sessionId,
-          jwt_token: jwtToken,
           timezone: request.timezone || 'Asia/Tokyo',
           language: request.language || 'ja'
         }
@@ -317,7 +315,6 @@ export async function checkCoachAIHealth(jwtToken?: string): Promise<{
         sessionState: {
           sessionAttributes: {
             session_id: "health-check-session",
-            jwt_token: jwtToken,
             timezone: "Asia/Tokyo",
             language: "ja"
           }
