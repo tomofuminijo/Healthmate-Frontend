@@ -63,7 +63,7 @@ export const EmptyStateWithTransitionControl: React.FC<EmptyStateWithTransitionC
             prefersReducedMotion && "opacity-100"
           )}
         >
-          <ChatContentContainer className="flex items-center justify-center min-h-0">
+          <ChatContentContainer className="flex items-center justify-center min-h-0 -mt-48">
             <div className="w-full max-w-2xl">
               {/* ウェルカムメッセージ */}
               <div className="text-center mb-8">
