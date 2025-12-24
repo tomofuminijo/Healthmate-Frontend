@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatSession {
@@ -109,7 +109,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       {/* オーバーレイ */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[90] md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -117,7 +117,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       {/* モバイルサイドバー */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-background border-r z-[100] md:hidden",
+          "fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-background border-r z-50 md:hidden",
           // アニメーション: モーション軽減設定に対応
           !prefersReducedMotion && [
             "transform transition-transform duration-300 ease-in-out",
