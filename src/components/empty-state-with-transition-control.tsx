@@ -72,7 +72,7 @@ export const EmptyStateWithTransitionControl: React.FC<EmptyStateWithTransitionC
                   Healthmate AI コーチ
                 </h1>
                 <p className="text-muted-foreground">
-                  健康について何でもお聞きください。パーソナライズされたアドバイスを提供します。
+                  Healthmate に相談してください。パーソナライズされたアドバイスを提供します。
                 </p>
               </div>
               

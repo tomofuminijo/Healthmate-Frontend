@@ -304,7 +304,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           placeholder={
             !serviceHealth.available && !!error
               ? "サービスが利用できません..."
-              : "健康について何でもお聞きください..."
+              : "Healthmate に相談"
           }
         />
       </div>

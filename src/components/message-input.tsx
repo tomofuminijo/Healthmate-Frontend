@@ -27,7 +27,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   isLoading = false,
   disabled = false,
-  placeholder = "メッセージを入力してください...",
+  placeholder = "Healthmate に相談",
   className,
   layoutMode = 'auto',
   isTransitioning = false
