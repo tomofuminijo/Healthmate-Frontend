@@ -150,7 +150,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       >
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 id="mobile-sidebar-title" className="font-semibold text-lg">チャットセッション</h2>
+          <h2 id="mobile-sidebar-title" className="font-semibold text-lg">チャット</h2>
           <Button
             variant="ghost"
             size="sm"
@@ -181,7 +181,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
             WebkitOverflowScrolling: 'touch' // iOS Safari でのスムーズスクロール
           }}
         >
-          <div className="space-y-1" role="list" aria-label="チャットセッション一覧">
+          <div className="space-y-1" role="list" aria-label="チャット一覧">
             {chatSessions.map((session) => (
               <div
                 key={session.id}
@@ -201,7 +201,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 }}
                 tabIndex={0}
                 role="listitem"
-                aria-label={`チャットセッション: ${session.title}`}
+                aria-label={`チャット: ${session.title}`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
@@ -240,8 +240,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
           <div className="p-4 border-t bg-muted/20 flex-shrink-0">
             <div className="text-xs text-muted-foreground space-y-1">
               <div><strong>ユーザー:</strong> {authSession.username}</div>
-              <div><strong>セッション:</strong> {currentChatSession?.id.slice(-8)}...</div>
-              <div><strong>セッション数:</strong> {chatSessions.length}</div>
+              <div><strong>チャット数:</strong> {chatSessions.length}</div>
             </div>
           </div>
         )}
@@ -269,7 +268,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="font-medium text-sm text-muted-foreground">
-            チャットセッション ({chatSessions.length})
+            チャット ({chatSessions.length})
           </h2>
           <Button
             variant="ghost"
@@ -337,7 +336,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         <div className="p-4 border-t bg-background/50 flex-shrink-0">
           <div className="text-xs text-muted-foreground space-y-1">
             <div><strong>ユーザー:</strong> {authSession.username}</div>
-            <div><strong>セッションID:</strong> {currentChatSession?.id.slice(-8)}...</div>
           </div>
         </div>
       )}

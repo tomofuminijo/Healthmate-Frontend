@@ -102,7 +102,7 @@ const ChatTestScreen: React.FC = () => {
                   window.dispatchEvent(event);
                 }}
                 className="md:hidden" // デスクトップでは非表示
-                aria-label="チャットセッション一覧を開く"
+                aria-label="チャット一覧を開く"
               >
                 <Menu className="h-5 w-5" />
               </Button>
