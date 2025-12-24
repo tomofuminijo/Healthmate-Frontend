@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Send, Loader2 } from 'lucide-react';
 import { useChatLayout } from './chat-layout-manager';
+import { useDeviceDetection } from '@/hooks/use-device-detection';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -34,6 +35,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [message, setMessage] = useState('');
   const [isComposing, setIsComposing] = useState(false); // IME変換中フラグ
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // デバイス検出
+  const { isMobile, isDesktop } = useDeviceDetection();
 
   // ChatLayoutManagerからレイアウト状態を取得（autoモードの場合）
   let chatLayoutContext = null;
@@ -87,18 +91,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   /**
    * キーボードショートカット処理
-   * - Enter: 送信（IME変換中は無効）
-   * - Shift + Enter: 改行
+   * デバイスに応じて異なる動作:
+   * - デスクトップ: Enter送信、Shift+Enter改行
+   * - モバイル: Enter改行、送信ボタンで送信
    */
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      // IME変換中は送信しない
-      if (isComposing) {
+    if (e.key === 'Enter') {
+      if (isDesktop && !e.shiftKey) {
+        // デスクトップ: Enterで送信（IME変換中は無効）
+        if (isComposing) {
+          return;
+        }
+        
+        e.preventDefault();
+        handleSendMessage();
+      } else if (isMobile) {
+        // モバイル: Enterは改行として処理（デフォルト動作）
+        // 送信は送信ボタンでのみ行う
         return;
       }
-      
-      e.preventDefault();
-      handleSendMessage();
+      // Shift+Enterの場合はデフォルト動作（改行）
     }
   };
 
@@ -219,17 +231,29 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </Button>
       </div>
 
-      {/* キーボードショートカットのヒント */}
+      {/* キーボードショートカットのヒント - デバイスに応じて表示 */}
       <div className={cn(
         "flex justify-between items-center mt-2 text-xs text-muted-foreground",
         actualLayoutMode === 'empty' && "max-w-2xl mx-auto",
         actualLayoutMode === 'active' && "max-w-4xl mx-auto"
       )}>
         <div>
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> で送信
-          <span className="mx-2">•</span>
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Shift</kbd> + 
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs ml-1">Enter</kbd> で改行
+          {isDesktop ? (
+            // デスクトップ用のヒント
+            <>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> で送信
+              <span className="mx-2">•</span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Shift</kbd> + 
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs ml-1">Enter</kbd> で改行
+            </>
+          ) : (
+            // モバイル用のヒント
+            <>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">改行</kbd> で改行
+              <span className="mx-2">•</span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">送信ボタン</kbd> で送信
+            </>
+          )}
         </div>
         
         {isLoading && (
