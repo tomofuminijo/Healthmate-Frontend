@@ -126,19 +126,35 @@ const ChatTestScreen: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex-1 flex">
-        {/* デスクトップサイドバー */}
-        <DesktopSidebar
-          chatSessions={chatSessions}
-          currentChatSession={currentChatSession}
-          onSwitchSession={switchChatSession}
-          onDeleteSession={deleteChatSession}
-          onCreateNewSession={createNewChatSession}
-          authSession={authSession || undefined}
-        />
+      <div className="flex-1 relative">
+        {/* デスクトップサイドバー - Fixed Position で完全分離 */}
+        <div 
+          className="hidden md:block fixed left-0 top-[73px] w-80 bg-muted/20 border-r z-10"
+          style={{ 
+            height: 'calc(100vh - 73px)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain'
+          }}
+        >
+          <DesktopSidebar
+            chatSessions={chatSessions}
+            currentChatSession={currentChatSession}
+            onSwitchSession={switchChatSession}
+            onDeleteSession={deleteChatSession}
+            onCreateNewSession={createNewChatSession}
+            authSession={authSession || undefined}
+          />
+        </div>
 
-        {/* メインチャットエリア */}
-        <div className="flex-1 flex flex-col h-full">
+        {/* メインチャットエリア - サイドバー分のマージンで独立 */}
+        <div 
+          className="md:ml-80 h-full"
+          style={{ 
+            height: 'calc(100vh - 73px)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain'
+          }}
+        >
           <ChatInterface className="h-full" />
         </div>
       </div>
