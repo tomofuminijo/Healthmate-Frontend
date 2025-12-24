@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/error-display';
 import { MobileSidebar, DesktopSidebar } from '@/components/mobile-sidebar';
 import { config, validateConfig } from '@/lib/config';
 import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
 import { useChat } from '@/contexts/chat-context';
 
@@ -61,20 +62,35 @@ const ChatTestScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* モバイルサイドバー - アプリケーション全体のトップレベルに配置 */}
+      <MobileSidebar
+        chatSessions={chatSessions}
+        currentChatSession={currentChatSession}
+        onSwitchSession={switchChatSession}
+        onDeleteSession={deleteChatSession}
+        onCreateNewSession={createNewChatSession}
+        authSession={authSession || undefined}
+      />
+
       {/* ヘッダー */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              {/* モバイルハンバーガーメニュー */}
-              <MobileSidebar
-                chatSessions={chatSessions}
-                currentChatSession={currentChatSession}
-                onSwitchSession={switchChatSession}
-                onDeleteSession={deleteChatSession}
-                onCreateNewSession={createNewChatSession}
-                authSession={authSession || undefined}
-              />
+              {/* モバイルハンバーガーメニューボタン - ヘッダー内に配置 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // MobileSidebarの開閉状態を制御するためのイベントを発火
+                  const event = new CustomEvent('toggleMobileSidebar');
+                  window.dispatchEvent(event);
+                }}
+                className="md:hidden" // デスクトップでは非表示
+                aria-label="チャットセッション一覧を開く"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
               
               <h1 className="text-xl font-semibold">Healthmate</h1>
               <div className="text-sm text-muted-foreground hidden sm:block">

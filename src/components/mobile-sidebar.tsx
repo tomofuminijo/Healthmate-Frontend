@@ -50,6 +50,18 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // カスタムイベントでサイドバーの開閉を制御
+  useEffect(() => {
+    const handleToggle = () => {
+      setIsOpen(prev => !prev);
+    };
+
+    window.addEventListener('toggleMobileSidebar', handleToggle);
+    return () => {
+      window.removeEventListener('toggleMobileSidebar', handleToggle);
+    };
+  }, []);
+
   // モバイルサイドバーが開いている時は背景スクロールを無効化
   useEffect(() => {
     if (isOpen) {
@@ -94,21 +106,10 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
 
   return (
     <>
-      {/* ハンバーガーメニューボタン */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen(true)}
-        className="md:hidden" // デスクトップでは非表示
-        aria-label="チャットセッション一覧を開く"
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
       {/* オーバーレイ */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-[90] md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -116,7 +117,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       {/* モバイルサイドバー */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-background border-r z-50 md:hidden",
+          "fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-background border-r z-[100] md:hidden",
           // アニメーション: モーション軽減設定に対応
           !prefersReducedMotion && [
             "transform transition-transform duration-300 ease-in-out",
