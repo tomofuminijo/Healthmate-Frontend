@@ -83,7 +83,7 @@ export const EmptyStateWithTransitionControl: React.FC<EmptyStateWithTransitionC
                 disabled={disabled}
                 placeholder={placeholder}
                 layoutMode="empty"
-                className="rounded-xl shadow-lg"
+                className="rounded-xl"
               />
             </div>
           </ChatContentContainer>

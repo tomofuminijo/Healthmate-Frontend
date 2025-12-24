@@ -196,6 +196,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               "pr-12", // 送信ボタンのスペース確保
               "focus:ring-2 focus:ring-primary/20",
               "disabled:opacity-50 disabled:cursor-not-allowed",
+              "shadow-none", // 影を無効化
               // 空チャット状態では特別なスタイル
               actualLayoutMode === 'empty' && [
                 "min-h-[56px]", // より大きな高さ
