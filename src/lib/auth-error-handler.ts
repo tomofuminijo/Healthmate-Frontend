@@ -11,6 +11,7 @@ export enum AuthErrorType {
   USER_NOT_FOUND = 'USER_NOT_FOUND',
   ACCOUNT_LOCKED = 'ACCOUNT_LOCKED',
   TOO_MANY_ATTEMPTS = 'TOO_MANY_ATTEMPTS',
+  NEW_PASSWORD_REQUIRED = 'NEW_PASSWORD_REQUIRED',
   UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
@@ -30,6 +31,7 @@ const ERROR_MESSAGES = {
   [AuthErrorType.USER_NOT_FOUND]: 'ユーザー名またはパスワードが正しくありません',
   [AuthErrorType.ACCOUNT_LOCKED]: 'アカウントがロックされています。しばらく後でお試しください',
   [AuthErrorType.TOO_MANY_ATTEMPTS]: 'サインイン試行回数が上限に達しました。しばらく後でお試しください',
+  [AuthErrorType.NEW_PASSWORD_REQUIRED]: '初回ログインのため、新しいパスワードを設定してください',
   [AuthErrorType.UNKNOWN_ERROR]: 'サインインに失敗しました。しばらく後でお試しください'
 } as const;
 
@@ -103,6 +105,15 @@ export function classifyAuthError(error: unknown): AuthError {
     return createAuthError(AuthErrorType.TOKEN_EXPIRED, errorMessage);
   }
 
+  // 強制パスワード変更エラーの検出
+  if (
+    errorMessage.includes('new_password_required') ||
+    errorMessage.includes('newpasswordrequired') ||
+    errorName === 'NewPasswordRequiredException'
+  ) {
+    return createAuthError(AuthErrorType.NEW_PASSWORD_REQUIRED, errorMessage);
+  }
+
   // その他のエラー
   return createAuthError(AuthErrorType.UNKNOWN_ERROR, errorMessage);
 }
@@ -159,8 +170,47 @@ export function validateSignInCredentials(username: string, password: string): V
 }
 
 /**
- * エラーがリトライ可能かどうかを判定
+ * 新しいパスワードのバリデーション
  */
+export function validateNewPassword(newPassword: string, confirmPassword: string): ValidationResult {
+  const errors: string[] = [];
+
+  // 新しいパスワードのバリデーション
+  if (!newPassword || !newPassword.trim()) {
+    errors.push('新しいパスワードを入力してください');
+  } else {
+    if (newPassword.length < 8) {
+      errors.push('パスワードは8文字以上で入力してください');
+    }
+    if (newPassword.length > 128) {
+      errors.push('パスワードは128文字以下で入力してください');
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      errors.push('パスワードには大文字を含めてください');
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      errors.push('パスワードには小文字を含めてください');
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      errors.push('パスワードには数字を含めてください');
+    }
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      errors.push('パスワードには記号を含めてください');
+    }
+  }
+
+  // パスワード確認のバリデーション
+  if (!confirmPassword || !confirmPassword.trim()) {
+    errors.push('パスワード確認を入力してください');
+  } else if (newPassword !== confirmPassword) {
+    errors.push('パスワードが一致しません');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
 export function isRetryableError(error: AuthError): boolean {
   return error.retryable || error.type === AuthErrorType.NETWORK_ERROR;
 }

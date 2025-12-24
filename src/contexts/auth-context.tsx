@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
+  completeNewPassword: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   getJwtToken: () => Promise<string | null>;
   refreshToken: () => Promise<void>;
@@ -24,6 +25,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
   const [authSession, setAuthSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cognitoClient] = useState(() => new CognitoClient(cognitoConfig));
+  const [pendingSignInResult, setPendingSignInResult] = useState<any>(null);
 
   const isAuthenticated = authSession !== null && AuthSessionManager.isAuthSessionValid(authSession);
 
@@ -102,10 +104,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       
       AuthSessionManager.saveAuthSession(newAuthSession);
       setAuthSession(newAuthSession);
+      setPendingSignInResult(null);
       
       console.log('Sign in successful, auth session set:', newAuthSession.username);
     } catch (error) {
       console.error('Sign in failed:', error);
+      
+      // 強制パスワード変更が必要な場合
+      if (error instanceof Error && error.name === 'NewPasswordRequiredException') {
+        setPendingSignInResult((error as any).signInResult);
+        // エラーを再スローして、UIで処理できるようにする
+      }
+      
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * 強制パスワード変更の完了
+   */
+  const completeNewPassword = async (newPassword: string): Promise<void> => {
+    if (!pendingSignInResult) {
+      throw new Error('パスワード変更のセッションが見つかりません');
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const newAuthSession = await cognitoClient.completeNewPasswordChallenge(
+        newPassword, 
+        pendingSignInResult
+      );
+      
+      AuthSessionManager.saveAuthSession(newAuthSession);
+      setAuthSession(newAuthSession);
+      setPendingSignInResult(null);
+      
+      console.log('New password challenge completed, auth session set:', newAuthSession.username);
+    } catch (error) {
+      console.error('Complete new password failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -178,6 +217,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
     isAuthenticated,
     isLoading,
     signIn,
+    completeNewPassword,
     logout,
     getJwtToken,
     refreshToken,

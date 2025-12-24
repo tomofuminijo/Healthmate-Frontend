@@ -1,5 +1,5 @@
 import { Amplify } from 'aws-amplify';
-import { signIn, signOut, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn, signOut, getCurrentUser, fetchAuthSession, confirmSignIn } from 'aws-amplify/auth';
 import { AuthSession, CognitoConfig } from '@/types/auth';
 
 /**
@@ -83,15 +83,66 @@ export class CognitoClient {
 
         console.log('Created auth session:', authSession);
         return authSession;
+      } else if (signInResult.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+        // 強制パスワード変更が必要な場合
+        const error = new Error('NEW_PASSWORD_REQUIRED');
+        error.name = 'NewPasswordRequiredException';
+        (error as any).signInResult = signInResult;
+        throw error;
       } else {
         throw new Error('ログインが完了していません');
       }
     } catch (error) {
       console.error('Sign in failed:', error);
       if (error instanceof Error) {
-        throw new Error(`ログインに失敗しました: ${error.message}`);
+        throw error; // 元のエラーをそのまま投げる
       }
       throw new Error('ログインに失敗しました');
+    }
+  }
+
+  /**
+   * 強制パスワード変更の完了
+   */
+  async completeNewPasswordChallenge(newPassword: string, signInResult: any): Promise<AuthSession> {
+    try {
+      console.log('Completing new password challenge');
+      
+      const confirmResult = await confirmSignIn({
+        challengeResponse: newPassword,
+      });
+
+      console.log('Confirm sign in result:', confirmResult);
+
+      if (confirmResult.isSignedIn) {
+        // パスワード変更完了後、ユーザー情報とセッション情報を取得
+        const [user, session] = await Promise.all([
+          getCurrentUser(),
+          fetchAuthSession(),
+        ]);
+
+        const authSession: AuthSession = {
+          userId: user.userId,
+          username: user.username,
+          email: user.signInDetails?.loginId || `${user.username}@example.com`,
+          jwtToken: session.tokens?.accessToken?.toString() || '',
+          refreshToken: session.tokens?.idToken?.toString() || '',
+          tokenExpiry: new Date(session.tokens?.accessToken?.payload.exp! * 1000),
+          refreshTokenExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          isActive: true,
+        };
+
+        console.log('New password challenge completed, auth session created:', authSession);
+        return authSession;
+      } else {
+        throw new Error('パスワード変更が完了していません');
+      }
+    } catch (error) {
+      console.error('Complete new password challenge failed:', error);
+      if (error instanceof Error) {
+        throw new Error(`パスワード変更に失敗しました: ${error.message}`);
+      }
+      throw new Error('パスワード変更に失敗しました');
     }
   }
 

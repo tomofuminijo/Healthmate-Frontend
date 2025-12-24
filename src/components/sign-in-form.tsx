@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { BrandHeader } from '@/components/brand-header';
+import { NewPasswordForm } from '@/components/new-password-form';
 import { 
   classifyAuthError, 
   validateSignInCredentials, 
@@ -18,6 +19,7 @@ export const SignInForm: React.FC = () => {
   const [error, setError] = useState<AuthError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
   const { signIn, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,6 +106,13 @@ export const SignInForm: React.FC = () => {
       
       // エラーを分類して適切なメッセージを表示
       const authError = classifyAuthError(error);
+      
+      // 強制パスワード変更が必要な場合
+      if (authError.type === AuthErrorType.NEW_PASSWORD_REQUIRED) {
+        setShowNewPasswordForm(true);
+        return;
+      }
+      
       setError(authError);
       
       // 安全なエラーログを出力（機密情報を除外）
@@ -152,6 +161,15 @@ export const SignInForm: React.FC = () => {
       handleSubmit(e as any);
     }
   }, [handleSubmit]);
+
+  // 新しいパスワードフォームのキャンセル処理
+  const handleNewPasswordCancel = useCallback(() => {
+    setShowNewPasswordForm(false);
+    setUsername('');
+    setPassword('');
+    setError(null);
+    setValidationErrors([]);
+  }, []);
 
   // エラー表示用のメモ化されたコンポーネント
   const ValidationErrors = useMemo(() => {
@@ -219,101 +237,105 @@ export const SignInForm: React.FC = () => {
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex items-center justify-center p-3 sm:p-4 lg:p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark-auto:bg-gray-900">
-      <Card 
-        variant="healthmate" 
-        className="w-full max-w-sm sm:max-w-md lg:max-w-lg high-contrast:border-black focus-trap my-auto"
-      >
-        <BrandHeader size="lg" />
-        <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
-          <form 
-            onSubmit={handleSubmit} 
-            className="space-y-4 sm:space-y-5"
-            onKeyDown={handleKeyDown}
-            noValidate
-            role="form"
-            aria-label="サインインフォーム"
-          >
-            <div className="space-y-2">
-              <label 
-                htmlFor="username" 
-                className="block text-sm font-medium text-gray-700 cursor-pointer high-contrast:text-black"
-              >
-                ユーザー名
-                <span className="text-red-500 ml-1" aria-label="必須項目">*</span>
-              </label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                value={username}
-                onChange={handleUsernameChange}
-                placeholder="ユーザー名を入力"
-                disabled={isFormLoading}
-                required
-                className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
-                autoComplete="username"
-                aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
-                aria-invalid={validationErrors.length > 0 ? "true" : "false"}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label 
-                htmlFor="password" 
-                className="block text-sm font-medium text-gray-700 cursor-pointer high-contrast:text-black"
-              >
-                パスワード
-                <span className="text-red-500 ml-1" aria-label="必須項目">*</span>
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={handlePasswordChange}
-                placeholder="パスワードを入力"
-                disabled={isFormLoading}
-                required
-                className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
-                autoComplete="current-password"
-                aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
-                aria-invalid={validationErrors.length > 0 ? "true" : "false"}
-              />
-            </div>
-
-            {/* バリデーションエラーの表示 */}
-            {ValidationErrors}
-
-            {/* 認証エラーの表示 */}
-            {AuthError}
-
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:shadow-lg transition-all duration-200 h-11 px-6 py-2.5 text-base rounded-md font-medium motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed touch-target high-contrast:bg-white high-contrast:text-black high-contrast:border-black" 
-              disabled={isFormLoading || validationErrors.length > 0}
-              aria-describedby={isFormLoading ? "loading-status" : undefined}
+      {showNewPasswordForm ? (
+        <NewPasswordForm onCancel={handleNewPasswordCancel} />
+      ) : (
+        <Card 
+          variant="healthmate" 
+          className="w-full max-w-sm sm:max-w-md lg:max-w-lg high-contrast:border-black focus-trap my-auto"
+        >
+          <BrandHeader size="lg" />
+          <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
+            <form 
+              onSubmit={handleSubmit} 
+              className="space-y-4 sm:space-y-5"
+              onKeyDown={handleKeyDown}
+              noValidate
+              role="form"
+              aria-label="サインインフォーム"
             >
-              {isFormLoading ? (
-                <>
-                  <div className="motion-reduce:animate-none animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 high-contrast:border-black" aria-hidden="true"></div>
-                  <span id="loading-status">
-                    {isSubmitting ? 'サインイン中...' : '処理中...'}
-                  </span>
-                </>
-              ) : (
-                'サインイン'
-              )}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <label 
+                  htmlFor="username" 
+                  className="block text-sm font-medium text-gray-700 cursor-pointer high-contrast:text-black"
+                >
+                  ユーザー名
+                  <span className="text-red-500 ml-1" aria-label="必須項目">*</span>
+                </label>
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  placeholder="ユーザー名を入力"
+                  disabled={isFormLoading}
+                  required
+                  className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
+                  autoComplete="username"
+                  aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
+                  aria-invalid={validationErrors.length > 0 ? "true" : "false"}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label 
+                  htmlFor="password" 
+                  className="block text-sm font-medium text-gray-700 cursor-pointer high-contrast:text-black"
+                >
+                  パスワード
+                  <span className="text-red-500 ml-1" aria-label="必須項目">*</span>
+                </label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  placeholder="パスワードを入力"
+                  disabled={isFormLoading}
+                  required
+                  className="motion-reduce:transition-none touch-target high-contrast:border-black high-contrast:bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200 transition-all duration-200 h-11 px-4 text-base rounded-md"
+                  autoComplete="current-password"
+                  aria-describedby={validationErrors.length > 0 ? "validation-errors" : undefined}
+                  aria-invalid={validationErrors.length > 0 ? "true" : "false"}
+                />
+              </div>
 
-          {/* スクリーンリーダー用の追加情報 */}
-          <div className="sr-only" aria-live="polite" aria-atomic="true">
-            {isFormLoading && "サインイン処理を実行中です。しばらくお待ちください。"}
-            {error && `エラーが発生しました: ${error.userFriendlyMessage}`}
-            {validationErrors.length > 0 && `入力エラーが${validationErrors.length}件あります。`}
-          </div>
-        </CardContent>
-      </Card>
+              {/* バリデーションエラーの表示 */}
+              {ValidationErrors}
+
+              {/* 認証エラーの表示 */}
+              {AuthError}
+
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:shadow-lg transition-all duration-200 h-11 px-6 py-2.5 text-base rounded-md font-medium motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed touch-target high-contrast:bg-white high-contrast:text-black high-contrast:border-black" 
+                disabled={isFormLoading || validationErrors.length > 0}
+                aria-describedby={isFormLoading ? "loading-status" : undefined}
+              >
+                {isFormLoading ? (
+                  <>
+                    <div className="motion-reduce:animate-none animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 high-contrast:border-black" aria-hidden="true"></div>
+                    <span id="loading-status">
+                      {isSubmitting ? 'サインイン中...' : '処理中...'}
+                    </span>
+                  </>
+                ) : (
+                  'サインイン'
+                )}
+              </Button>
+            </form>
+
+            {/* スクリーンリーダー用の追加情報 */}
+            <div className="sr-only" aria-live="polite" aria-atomic="true">
+              {isFormLoading && "サインイン処理を実行中です。しばらくお待ちください。"}
+              {error && `エラーが発生しました: ${error.userFriendlyMessage}`}
+              {validationErrors.length > 0 && `入力エラーが${validationErrors.length}件あります。`}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
