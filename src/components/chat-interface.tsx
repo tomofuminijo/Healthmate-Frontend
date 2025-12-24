@@ -1,5 +1,6 @@
 import React from 'react';
 import { MessageList } from './message-list';
+import { MessageListWithTransitionControl } from './message-list-with-transition-control';
 import { MessageInput } from './message-input';
 import { ErrorDisplay } from './error-display';
 import { ChatLayoutManager, ChatContentContainer } from './chat-layout-manager';
@@ -385,7 +386,7 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
           {/* チャット履歴表示エリア - 入力欄の高さを考慮 */}
           <div className="flex-1 overflow-hidden relative pb-24">
             <ChatContentContainer className="h-full">
-              <MessageList 
+              <MessageListWithTransitionControl 
                 ref={messageListRef}
                 messages={displayMessages}
                 className="h-full"
