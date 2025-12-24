@@ -162,7 +162,7 @@ const ChatTestScreen: React.FC = () => {
           className="md:ml-80 h-full"
           style={{ 
             height: 'calc(100vh - 73px)',
-            overflowY: 'auto',
+            overflow: currentChatSession?.messages?.length > 0 ? 'auto' : 'hidden',
             overscrollBehavior: 'contain'
           }}
         >
