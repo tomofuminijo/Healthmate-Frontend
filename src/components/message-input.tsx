@@ -191,6 +191,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onCompositionEnd={handleCompositionEnd}
             placeholder={placeholder}
             disabled={disabled || isLoading || actualIsTransitioning}
+            data-testid="message-input"
             className={cn(
               "min-h-[44px] max-h-[120px] resize-none",
               "pr-12", // 送信ボタンのスペース確保

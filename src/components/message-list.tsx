@@ -33,31 +33,64 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
     // DOM要素のプロパティとメソッドをコピーし、カスタムメソッドを追加
     return Object.assign(element, {
       scrollToBottom: (smooth: boolean = true) => {
-        // 直接messagesEndRefを使用してスクロール
         if (messagesEndRef.current) {
           const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           
-          // 方法1: scrollIntoViewを使用
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: prefersReducedMotion || !smooth ? 'auto' : 'smooth',
-            block: 'end'
-          });
+          console.log('📏 Direct max scroll approach');
           
-          // 方法2: 確実にするため、少し遅延してscrollTopを直接設定
+          // 直接最大スクロール位置に移動（scrollIntoViewは使用しない）
           setTimeout(() => {
-            if (element && element.scrollHeight > element.clientHeight) {
-              const maxScroll = element.scrollHeight - element.clientHeight;
-              const extraScroll = 200; // 入力欄の高さ分を考慮して増加
-              element.scrollTop = maxScroll + extraScroll;
+            // 実際のスクロール可能な要素を見つける
+            let scrollableElement = element;
+            let parent = element.parentElement;
+            
+            while (parent && parent !== document.body) {
+              if (parent.scrollHeight > parent.clientHeight) {
+                const style = window.getComputedStyle(parent);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                  scrollableElement = parent;
+                  break;
+                }
+              }
+              parent = parent.parentElement;
             }
-          }, smooth && !prefersReducedMotion ? 400 : 100); // タイミングを調整
-          
-          // 方法3: さらに確実にするため、もう一度遅延実行
-          setTimeout(() => {
-            if (element) {
-              element.scrollTop = element.scrollHeight; // 最大まで確実にスクロール
+            
+            // 要素レベルでの最大スクロール
+            const maxScrollTop = scrollableElement.scrollHeight - scrollableElement.clientHeight;
+            if (maxScrollTop > 0) {
+              if (smooth && !prefersReducedMotion) {
+                scrollableElement.scrollTo({
+                  top: maxScrollTop,
+                  behavior: 'smooth'
+                });
+              } else {
+                scrollableElement.scrollTop = maxScrollTop;
+              }
+              console.log('📏 Element scroll to max:', {
+                maxScrollTop,
+                actualScrollTop: scrollableElement.scrollTop,
+                tagName: scrollableElement.tagName
+              });
             }
-          }, smooth && !prefersReducedMotion ? 600 : 200);
+            
+            // ページレベルでの最大スクロール
+            const maxPageScroll = document.documentElement.scrollHeight - window.innerHeight;
+            if (maxPageScroll > window.scrollY) {
+              if (smooth && !prefersReducedMotion) {
+                window.scrollTo({
+                  top: maxPageScroll,
+                  behavior: 'smooth'
+                });
+              } else {
+                window.scrollTo(0, maxPageScroll);
+              }
+              console.log('📏 Page scroll to max:', {
+                maxPageScroll,
+                actualScrollY: window.scrollY
+              });
+            }
+            
+          }, 50); // 短い遅延で即座に実行
           
           // コールバック実行
           if (onScrollToBottom) {
