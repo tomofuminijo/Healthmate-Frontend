@@ -128,7 +128,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
       {/* モバイルサイドバー */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-background border-r z-50 md:hidden",
+          "fixed top-0 left-0 w-80 max-w-[85vw] bg-background border-r z-50 md:hidden flex flex-col",
           // アニメーション: モーション軽減設定に対応
           !prefersReducedMotion && [
             "transform transition-transform duration-300 ease-in-out",
@@ -139,6 +139,10 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
             isOpen ? "block" : "hidden"
           ]
         )}
+        style={{
+          height: '100vh',
+          maxHeight: '100vh'
+        }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="mobile-sidebar-title"
@@ -158,7 +162,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
         </div>
 
         {/* 新しいチャットボタン */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b flex-shrink-0">
           <Button
             onClick={handleCreateNewSession}
             className="w-full"
@@ -170,7 +174,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
         </div>
 
         {/* セッション一覧 */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div 
+          className="flex-1 overflow-y-auto p-2"
+          style={{ 
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch' // iOS Safari でのスムーズスクロール
+          }}
+        >
           <div className="space-y-1" role="list" aria-label="チャットセッション一覧">
             {chatSessions.map((session) => (
               <div
@@ -227,7 +237,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
 
         {/* システム情報 */}
         {authSession && (
-          <div className="p-4 border-t bg-muted/20">
+          <div className="p-4 border-t bg-muted/20 flex-shrink-0">
             <div className="text-xs text-muted-foreground space-y-1">
               <div><strong>ユーザー:</strong> {authSession.username}</div>
               <div><strong>セッション:</strong> {currentChatSession?.id.slice(-8)}...</div>
