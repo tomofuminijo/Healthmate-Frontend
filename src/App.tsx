@@ -28,6 +28,7 @@ const ChatTestScreen: React.FC = () => {
     createNewChatSession, 
     switchChatSession, 
     deleteChatSession,
+    updateChatSessionTitle,
     isLoading
   } = useChat();
 
@@ -80,6 +81,7 @@ const ChatTestScreen: React.FC = () => {
         currentChatSession={currentChatSession}
         onSwitchSession={switchChatSession}
         onDeleteSession={deleteChatSession}
+        onUpdateSessionTitle={updateChatSessionTitle}
         onCreateNewSession={createNewChatSession}
         authSession={authSession || undefined}
       />
@@ -152,6 +154,7 @@ const ChatTestScreen: React.FC = () => {
             currentChatSession={currentChatSession}
             onSwitchSession={switchChatSession}
             onDeleteSession={deleteChatSession}
+            onUpdateSessionTitle={updateChatSessionTitle}
             onCreateNewSession={createNewChatSession}
             authSession={authSession || undefined}
           />
@@ -162,7 +165,7 @@ const ChatTestScreen: React.FC = () => {
           className="md:ml-80 h-full"
           style={{ 
             height: 'calc(100vh - 73px)',
-            overflow: currentChatSession?.messages?.length > 0 ? 'auto' : 'hidden',
+            overflow: currentChatSession?.messages?.length && currentChatSession.messages.length > 0 ? 'auto' : 'hidden',
             overscrollBehavior: 'contain'
           }}
         >
