@@ -21,7 +21,7 @@ export interface ChatResponse {
  * CoachAI AgentCore Runtime エンドポイント設定
  */
 const AGENTCORE_CONFIG = {
-  region: 'us-west-2',
+  region: import.meta.env.VITE_AWS_REGION || 'us-west-2',
   // 実際のAgent ARNは環境変数から取得（本番環境）
   agentArn: import.meta.env.VITE_COACHAI_AGENT_ARN || 'arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai',
 };

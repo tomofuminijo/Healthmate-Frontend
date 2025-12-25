@@ -33,14 +33,14 @@ export const config = {
   
   // AWS設定
   aws: {
-    region: import.meta.env.VITE_AWS_REGION || 'us-west-2',
+    region: import.meta.env.VITE_AWS_REGION || 'ap-northeast-1',
   },
   
   // Cognito設定
   cognito: {
     userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
     clientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-    region: import.meta.env.VITE_COGNITO_REGION || 'us-west-2',
+    region: import.meta.env.VITE_COGNITO_REGION || import.meta.env.VITE_AWS_REGION || 'ap-northeast-1',
   },
   
   // API エンドポイント

@@ -41,22 +41,34 @@ class DeploymentConfig:
         cf_client = boto3.client('cloudformation', region_name=region)
         stack_name = f"Healthmate-FrontendStack-{environment}"
         
-        try:
-            # Get stack outputs
-            response = cf_client.describe_stacks(StackName=stack_name)
-            stack = response['Stacks'][0]
-            outputs = {output['OutputKey']: output['OutputValue'] for output in stack.get('Outputs', [])}
-            
-            return cls(
-                environment=environment,
-                bucket_name=outputs['BucketName'],
-                distribution_id=outputs['DistributionId'],
-                distribution_domain_name=outputs['DistributionDomainName'],
-                website_url=outputs['WebsiteUrl'],
-                region=region
-            )
-        except Exception as e:
-            raise RuntimeError(f"Failed to get CloudFormation outputs for stack {stack_name}: {e}")
+        # リトライ機能付きでスタック情報を取得
+        max_retries = 10
+        retry_delay = 2  # 秒
+        
+        for attempt in range(max_retries):
+            try:
+                # Get stack outputs
+                response = cf_client.describe_stacks(StackName=stack_name)
+                stack = response['Stacks'][0]
+                outputs = {output['OutputKey']: output['OutputValue'] for output in stack.get('Outputs', [])}
+                
+                return cls(
+                    environment=environment,
+                    bucket_name=outputs['BucketName'],
+                    distribution_id=outputs['DistributionId'],
+                    distribution_domain_name=outputs['DistributionDomainName'],
+                    website_url=outputs['WebsiteUrl'],
+                    region=region
+                )
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"スタック {stack_name} の取得に失敗しました (試行 {attempt + 1}/{max_retries}): {e}")
+                    print(f"{retry_delay}秒後にリトライします...")
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 指数バックオフ
+                else:
+                    raise RuntimeError(f"Failed to get CloudFormation outputs for stack {stack_name}: {e}")
 
 
 @dataclass
@@ -100,7 +112,7 @@ class EnvironmentSettings:
             
             return cls(
                 environment=config['environment'],
-                aws_region=config['aws']['region'],
+                aws_region=os.environ.get('AWS_REGION', config['aws']['region']),  # 環境変数を優先
                 aws_profile=config['aws']['profile'],
                 build_mode=config['build']['mode'],
                 build_sourcemap=config['build']['sourcemap'],

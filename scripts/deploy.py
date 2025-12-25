@@ -375,7 +375,10 @@ def main():
         # Print CloudFront distribution URL
         try:
             from config import DeploymentConfig
-            deployment_config = DeploymentConfig.from_cloudformation(args.environment)
+            # 環境変数からリージョンを取得
+            import os
+            region = os.environ.get('AWS_REGION', 'us-west-2')
+            deployment_config = DeploymentConfig.from_cloudformation(args.environment, region)
             print(f"\n🌐 CloudFront Distribution URL:")
             print(f"   {deployment_config.website_url}")
             print(f"\n📋 Distribution Details:")
@@ -383,6 +386,7 @@ def main():
             print(f"   Distribution ID: {deployment_config.distribution_id}")
         except Exception as e:
             print(f"\n⚠️  Could not retrieve CloudFront URL: {e}")
+            print(f"   デプロイは正常に完了しましたが、CloudFront情報の取得に失敗しました")
         
         sys.exit(0)
     else:

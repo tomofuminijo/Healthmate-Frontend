@@ -17,9 +17,10 @@ from pathlib import Path
 class EnvironmentGenerator:
     """環境ファイル生成クラス"""
     
-    def __init__(self, environment: str, region: str = 'us-west-2'):
+    def __init__(self, environment: str, region: str = None):
         self.environment = environment
-        self.region = region
+        # AWS_REGIONが設定されていればそれを使用、なければデフォルト
+        self.region = region or os.environ.get('AWS_REGION', 'us-west-2')
         self.logger = self._setup_logger()
         
         # AWS クライアント初期化
@@ -227,14 +228,16 @@ def main():
     
     # AWS認証情報の確認
     try:
-        sts_client = boto3.client('sts')
+        region = os.environ.get('AWS_REGION', 'us-west-2')
+        sts_client = boto3.client('sts', region_name=region)
         sts_client.get_caller_identity()
     except Exception as e:
         print(f"❌ AWS credentials not configured: {e}")
         sys.exit(1)
     
     # 環境ファイル生成
-    generator = EnvironmentGenerator(environment)
+    region = os.environ.get('AWS_REGION', 'us-west-2')
+    generator = EnvironmentGenerator(environment, region)
     success = generator.generate_env_file()
     
     sys.exit(0 if success else 1)

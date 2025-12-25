@@ -164,8 +164,11 @@ deploy_cdk() {
     setup_cdk_venv
     activate_cdk_venv
     
-    # Set environment variable for CDK
+    # Set environment variables for CDK (inherit from parent process if available)
     export HEALTHMATE_ENV="$environment"
+    if [[ -n "$AWS_REGION" ]]; then
+        print_info "Using AWS region from environment: $AWS_REGION"
+    fi
     
     # Change to CDK directory
     cd "$CDK_DIR"
@@ -188,6 +191,9 @@ deploy_cdk() {
     
     if [ $exit_code -eq 0 ]; then
         print_success "CDK infrastructure deployed successfully"
+        # CloudFormationの整合性確保のため少し待機
+        print_info "Waiting for CloudFormation consistency..."
+        sleep 10
     else
         print_error "CDK deployment failed with exit code $exit_code"
         exit $exit_code
@@ -203,6 +209,12 @@ generate_env_file() {
     # Setup and activate scripts virtual environment
     setup_scripts_venv
     activate_scripts_venv
+    
+    # Inherit AWS_REGION from parent process if available
+    if [[ -n "$AWS_REGION" ]]; then
+        print_info "Using AWS region from environment: $AWS_REGION"
+        export AWS_REGION="$AWS_REGION"
+    fi
     
     # Run environment file generator
     cd "$SCRIPTS_DIR"
@@ -228,6 +240,11 @@ deploy_frontend() {
     # Setup and activate scripts virtual environment
     setup_scripts_venv
     activate_scripts_venv
+    
+    # Inherit AWS_REGION from parent process if available
+    if [[ -n "$AWS_REGION" ]]; then
+        export AWS_REGION="$AWS_REGION"
+    fi
     
     # Run deployment
     cd "$SCRIPTS_DIR"
