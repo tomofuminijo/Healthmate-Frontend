@@ -104,7 +104,7 @@ export class CognitoClient {
   /**
    * 強制パスワード変更の完了
    */
-  async completeNewPasswordChallenge(newPassword: string, signInResult: any): Promise<AuthSession> {
+  async completeNewPasswordChallenge(newPassword: string, _signInResult: any): Promise<AuthSession> {
     try {
       console.log('Completing new password challenge');
       

@@ -1,0 +1,1 @@
+# Healthmate Frontend Hosting CDK Package

@@ -1,0 +1,22 @@
+{
+  "environment": "dev",
+  "aws": {
+    "region": "us-west-2",
+    "profile": null
+  },
+  "build": {
+    "mode": "development",
+    "sourcemap": true,
+    "minify": false
+  },
+  "deployment": {
+    "confirm_before_deploy": false,
+    "enable_cache_invalidation": true,
+    "upload_concurrency": 10,
+    "retry_attempts": 3
+  },
+  "monitoring": {
+    "enable_logging": true,
+    "log_level": "DEBUG"
+  }
+}

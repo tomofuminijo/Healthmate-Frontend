@@ -1,0 +1,22 @@
+{
+  "environment": "stage",
+  "aws": {
+    "region": "us-west-2",
+    "profile": null
+  },
+  "build": {
+    "mode": "production",
+    "sourcemap": true,
+    "minify": true
+  },
+  "deployment": {
+    "confirm_before_deploy": true,
+    "enable_cache_invalidation": true,
+    "upload_concurrency": 15,
+    "retry_attempts": 3
+  },
+  "monitoring": {
+    "enable_logging": true,
+    "log_level": "INFO"
+  }
+}

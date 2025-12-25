@@ -100,7 +100,6 @@ export function logConfig(): void {
   if (config.isDevelopment()) {
     console.log('Environment Configuration:', {
       environment: config.environment,
-      nodeEnv: config.nodeEnv,
       aws: config.aws,
       cognito: {
         ...config.cognito,

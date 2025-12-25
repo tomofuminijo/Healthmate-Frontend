@@ -1,0 +1,12 @@
+# AWS CDK dependencies for Healthmate Frontend Hosting
+aws-cdk-lib>=2.100.0,<3.0.0
+constructs>=10.0.0,<11.0.0
+
+# Development and testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+moto>=4.0.0
+hypothesis>=6.0.0
+black>=22.0.0
+mypy>=1.0.0
+flake8>=5.0.0

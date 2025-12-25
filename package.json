@@ -20,7 +20,11 @@
     "preview:prod": "vite preview --mode prod",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "deploy": "./deploy.sh",
+    "deploy:dev": "./deploy.sh dev",
+    "deploy:stage": "./deploy.sh stage",
+    "deploy:prod": "./deploy.sh prod"
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.0.0",

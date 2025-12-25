@@ -1,0 +1,22 @@
+{
+  "environment": "prod",
+  "aws": {
+    "region": "us-west-2",
+    "profile": null
+  },
+  "build": {
+    "mode": "production",
+    "sourcemap": false,
+    "minify": true
+  },
+  "deployment": {
+    "confirm_before_deploy": true,
+    "enable_cache_invalidation": true,
+    "upload_concurrency": 20,
+    "retry_attempts": 5
+  },
+  "monitoring": {
+    "enable_logging": true,
+    "log_level": "WARNING"
+  }
+}
