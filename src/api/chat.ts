@@ -55,13 +55,8 @@ export async function sendChatMessage(
     
     const payload = {
       prompt: request.prompt,
-      sessionState: {
-        sessionAttributes: {
-          session_id: request.sessionId,
-          timezone: request.timezone || 'Asia/Tokyo',
-          language: request.language || 'ja'
-        }
-      }
+      timezone: request.timezone || 'Asia/Tokyo',
+      language: request.language || 'ja'
     };
 
     console.log('🚀 CoachAI Request Start:', {
@@ -187,13 +182,8 @@ export async function* streamChatMessage(
     
     const payload = {
       prompt: request.prompt,
-      sessionState: {
-        sessionAttributes: {
-          session_id: request.sessionId,
-          timezone: request.timezone || 'Asia/Tokyo',
-          language: request.language || 'ja'
-        }
-      }
+      timezone: request.timezone || 'Asia/Tokyo',
+      language: request.language || 'ja'
     };
 
     console.log('🌊 CoachAI Streaming Request Start:', {
@@ -312,13 +302,8 @@ export async function checkCoachAIHealth(jwtToken?: string): Promise<{
     if (jwtToken) {
       const testPayload = {
         prompt: "health check",
-        sessionState: {
-          sessionAttributes: {
-            session_id: "health-check-session",
-            timezone: "Asia/Tokyo",
-            language: "ja"
-          }
-        }
+        timezone: "Asia/Tokyo",
+        language: "ja"
       };
 
       const response = await fetch(endpointUrl, {

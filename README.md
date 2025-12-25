@@ -28,7 +28,7 @@ Healthmate-Frontend は以下の3つの環境をサポートします：
 #### .env.dev
 ```bash
 HEALTHMATE_ENV=dev
-VITE_COACHAI_ENDPOINT=https://agent-dev.healthmate.example.com
+VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-dev
 VITE_MCP_GATEWAY_ENDPOINT=https://api-dev.healthmate.example.com
 VITE_COGNITO_USER_POOL_ID=us-west-2_xxxxxxxxx
 VITE_COGNITO_CLIENT_ID=dev-client-id
@@ -38,7 +38,7 @@ VITE_COGNITO_REGION=us-west-2
 #### .env.stage
 ```bash
 HEALTHMATE_ENV=stage
-VITE_COACHAI_ENDPOINT=https://agent-stage.healthmate.example.com
+VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-stage
 VITE_MCP_GATEWAY_ENDPOINT=https://api-stage.healthmate.example.com
 VITE_COGNITO_USER_POOL_ID=us-west-2_yyyyyyyyy
 VITE_COGNITO_CLIENT_ID=stage-client-id
@@ -48,7 +48,7 @@ VITE_COGNITO_REGION=us-west-2
 #### .env.prod
 ```bash
 HEALTHMATE_ENV=prod
-VITE_COACHAI_ENDPOINT=https://agent.healthmate.example.com
+VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai
 VITE_MCP_GATEWAY_ENDPOINT=https://api.healthmate.example.com
 VITE_COGNITO_USER_POOL_ID=us-west-2_zzzzzzzzz
 VITE_COGNITO_CLIENT_ID=prod-client-id
@@ -73,13 +73,57 @@ npm run test:stage
 npm run test:prod
 ```
 
+## CoachAI 連携
+
+### API 通信仕様
+
+Healthmate-CoachAI サービスとの通信では、シンプルなフラット構造のペイロードを使用します：
+
+#### ペイロード構造
+```json
+{
+  "prompt": "ユーザーからのメッセージ",
+  "timezone": "Asia/Tokyo",
+  "language": "ja"
+}
+```
+
+#### 認証・セッションヘッダー
+```http
+Authorization: Bearer {cognito_access_token}
+X-Amzn-Bedrock-AgentCore-Runtime-Session-Id: {session_id}
+Content-Type: application/json
+```
+
+#### 重要な変更点
+- **フラット構造**: sessionState/sessionAttributes の階層構造を廃止
+- **ヘッダーベース**: session_id はペイロードではなくヘッダーで送信
+- **シンプル化**: 必要最小限のフィールドのみ使用
+
+### 実装例
+
+```typescript
+// src/api/chat.ts での実装
+const payload = {
+  prompt: request.prompt,
+  timezone: request.timezone || 'Asia/Tokyo',
+  language: request.language || 'ja'
+};
+
+const headers = {
+  'Authorization': `Bearer ${jwtToken}`,
+  'Content-Type': 'application/json',
+  'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id': request.sessionId,
+};
+```
+
 ## 技術スタック
 
 - **フレームワーク**: React 18 + Vite 5
 - **言語**: TypeScript 5
 - **UIライブラリ**: Tailwind CSS + shadcn/ui
-- **AI連携**: Vercel AI SDK
-- **認証**: AWS Cognito SDK
+- **AI連携**: CoachAI AgentCore Runtime (フラット構造ペイロード)
+- **認証**: AWS Cognito SDK (JWT Access Token)
 - **状態管理**: React Context + useReducer
 - **ルーティング**: React Router v6
 - **テスト**: Vitest + React Testing Library + fast-check
@@ -155,7 +199,7 @@ src/
 | 変数名 | 説明 | デフォルト値 | 環境別設定 |
 |--------|------|-------------|-----------|
 | `HEALTHMATE_ENV` | デプロイ環境 | `dev` | dev/stage/prod |
-| `VITE_COACHAI_ENDPOINT` | CoachAI APIエンドポイント | 環境により異なる | 環境別URL |
+| `VITE_COACHAI_AGENT_ARN` | CoachAI Agent ARN | 環境により異なる | 環境別ARN |
 | `VITE_MCP_GATEWAY_ENDPOINT` | MCP Gateway エンドポイント | 環境により異なる | 環境別URL |
 | `VITE_COGNITO_USER_POOL_ID` | Cognito User Pool ID | - | 環境別Pool ID |
 | `VITE_COGNITO_CLIENT_ID` | Cognito Client ID | - | 環境別Client ID |
@@ -163,11 +207,11 @@ src/
 
 ### 環境別エンドポイント例
 
-| 環境 | CoachAI エンドポイント | MCP Gateway エンドポイント |
-|------|----------------------|---------------------------|
-| dev | `https://agent-dev.healthmate.example.com` | `https://api-dev.healthmate.example.com` |
-| stage | `https://agent-stage.healthmate.example.com` | `https://api-stage.healthmate.example.com` |
-| prod | `https://agent.healthmate.example.com` | `https://api.healthmate.example.com` |
+| 環境 | CoachAI Agent ARN | MCP Gateway エンドポイント |
+|------|-------------------|---------------------------|
+| dev | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-dev` | `https://api-dev.healthmate.example.com` |
+| stage | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-stage` | `https://api-stage.healthmate.example.com` |
+| prod | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai` | `https://api.healthmate.example.com` |
 
 ## 開発ガイドライン
 
