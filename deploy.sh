@@ -1,9 +1,6 @@
 #!/bin/bash
 #
-# Deployment wrapper script for Healthmate Frontend.
-#
-# This script provides a convenient interface for deploying the frontend
-# to different environments using the Python deployment scripts.
+# Unified deployment script for Healthmate Frontend.
 #
 
 set -e  # Exit on any error
@@ -11,6 +8,7 @@ set -e  # Exit on any error
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$SCRIPT_DIR/scripts"
+CDK_DIR="$SCRIPT_DIR/cdk"
 
 # Colors for output
 RED='\033[0;31m'
@@ -41,7 +39,7 @@ show_usage() {
     cat << EOF
 Usage: $0 <environment> [options]
 
-Deploy Healthmate Frontend to AWS S3 + CloudFront
+Deploy Healthmate Frontend infrastructure and application to AWS
 
 ENVIRONMENTS:
     dev     Deploy to development environment
@@ -49,19 +47,23 @@ ENVIRONMENTS:
     prod    Deploy to production environment
 
 OPTIONS:
+    --skip-cdk           Skip CDK infrastructure deployment
     --skip-build         Skip the frontend build step
-    --verbose, -v       Enable verbose logging
-    --help, -h          Show this help message
+    --skip-upload        Skip the S3 upload step
+    --verbose, -v        Enable verbose logging
+    --help, -h           Show this help message
 
 EXAMPLES:
-    $0 dev                    # Deploy to dev environment
+    $0 dev                    # Full deployment (CDK + build + upload)
     $0 prod --verbose         # Deploy to prod with verbose output
-    $0 stage --skip-build     # Deploy to stage without building
+    $0 stage --skip-cdk       # Deploy app only (skip infrastructure)
+    $0 dev --skip-build       # Deploy without rebuilding frontend
     
 PREREQUISITES:
     - Node.js and npm installed
+    - Python 3.12+ with virtual environment support
     - AWS credentials configured (aws configure or environment variables)
-    - CDK infrastructure deployed for the target environment
+    - AWS CDK CLI installed (npm install -g aws-cdk)
 EOF
 }
 
@@ -86,31 +88,110 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check if scripts directory exists
+    # Check AWS CDK CLI
+    if ! command -v cdk &> /dev/null; then
+        print_error "AWS CDK CLI is not installed. Please install with: npm install -g aws-cdk"
+        exit 1
+    fi
+    
+    # Check AWS credentials
+    if ! aws sts get-caller-identity &> /dev/null; then
+        print_error "AWS credentials not configured. Please run 'aws configure' or set environment variables."
+        exit 1
+    fi
+    
+    # Check if directories exist
     if [ ! -d "$SCRIPTS_DIR" ]; then
         print_error "Scripts directory not found: $SCRIPTS_DIR"
         exit 1
     fi
     
-    # Check if virtual environment exists
-    if [ ! -d "$SCRIPTS_DIR/.venv" ]; then
-        print_warning "Python virtual environment not found. Creating..."
-        cd "$SCRIPTS_DIR"
-        python3 -m venv .venv
-        source .venv/bin/activate
-        pip install -r requirements.txt
-        cd "$SCRIPT_DIR"
-        print_success "Virtual environment created and dependencies installed"
+    if [ ! -d "$CDK_DIR" ]; then
+        print_error "CDK directory not found: $CDK_DIR"
+        exit 1
     fi
     
     print_success "Prerequisites check completed"
 }
 
-# Function to activate Python virtual environment
-activate_venv() {
+# Function to setup Python virtual environment for scripts
+setup_scripts_venv() {
+    if [ ! -d "$SCRIPTS_DIR/.venv" ]; then
+        print_info "Setting up Python virtual environment for scripts..."
+        cd "$SCRIPTS_DIR"
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        cd "$SCRIPT_DIR"
+        print_success "Scripts virtual environment created and dependencies installed"
+    fi
+}
+
+# Function to setup Python virtual environment for CDK
+setup_cdk_venv() {
+    if [ ! -d "$CDK_DIR/.venv" ]; then
+        print_info "Setting up Python virtual environment for CDK..."
+        cd "$CDK_DIR"
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        cd "$SCRIPT_DIR"
+        print_success "CDK virtual environment created and dependencies installed"
+    fi
+}
+
+# Function to activate Python virtual environment for scripts
+activate_scripts_venv() {
     cd "$SCRIPTS_DIR"
     source .venv/bin/activate
     cd "$SCRIPT_DIR"
+}
+
+# Function to activate Python virtual environment for CDK
+activate_cdk_venv() {
+    cd "$CDK_DIR"
+    source .venv/bin/activate
+    cd "$SCRIPT_DIR"
+}
+
+# Function to deploy CDK infrastructure
+deploy_cdk() {
+    local environment="$1"
+    
+    print_info "Deploying CDK infrastructure for $environment environment..."
+    
+    # Setup and activate CDK virtual environment
+    setup_cdk_venv
+    activate_cdk_venv
+    
+    # Set environment variable for CDK
+    export HEALTHMATE_ENV="$environment"
+    
+    # Change to CDK directory
+    cd "$CDK_DIR"
+    
+    # Bootstrap CDK if needed (only for first deployment)
+    print_info "Checking CDK bootstrap status..."
+    if ! cdk list &> /dev/null; then
+        print_info "Bootstrapping CDK..."
+        cdk bootstrap
+    fi
+    
+    # Deploy CDK stack
+    print_info "Deploying CDK stack: Healthmate-FrontendStack-$environment"
+    cdk deploy "Healthmate-FrontendStack-$environment" \
+        --require-approval never \
+        --context environment="$environment"
+    
+    local exit_code=$?
+    cd "$SCRIPT_DIR"
+    
+    if [ $exit_code -eq 0 ]; then
+        print_success "CDK infrastructure deployed successfully"
+    else
+        print_error "CDK deployment failed with exit code $exit_code"
+        exit $exit_code
+    fi
 }
 
 # Function to generate environment file
@@ -119,8 +200,9 @@ generate_env_file() {
     
     print_info "Generating .env.$environment file from CloudFormation..."
     
-    # Activate virtual environment
-    activate_venv
+    # Setup and activate scripts virtual environment
+    setup_scripts_venv
+    activate_scripts_venv
     
     # Run environment file generator
     cd "$SCRIPTS_DIR"
@@ -136,21 +218,16 @@ generate_env_file() {
     fi
 }
 
-# Main deployment function
-deploy() {
+# Function to deploy frontend application
+deploy_frontend() {
     local environment="$1"
     shift  # Remove environment from arguments
     
-    print_info "Starting deployment to $environment environment..."
+    print_info "Deploying frontend application to $environment environment..."
     
-    # Check prerequisites
-    check_prerequisites
-    
-    # Generate environment file from CloudFormation
-    generate_env_file "$environment"
-    
-    # Activate virtual environment
-    activate_venv
+    # Setup and activate scripts virtual environment
+    setup_scripts_venv
+    activate_scripts_venv
     
     # Run deployment
     cd "$SCRIPTS_DIR"
@@ -159,13 +236,88 @@ deploy() {
     cd "$SCRIPT_DIR"
     
     if [ $exit_code -eq 0 ]; then
-        echo ""
-        print_success "Deployment completed successfully!"
-        print_info "Check the output above for the CloudFront distribution URL"
+        print_success "Frontend application deployed successfully"
     else
-        print_error "Deployment failed with exit code $exit_code"
+        print_error "Frontend deployment failed with exit code $exit_code"
         exit $exit_code
     fi
+}
+
+# Main deployment function
+deploy() {
+    local environment="$1"
+    local skip_cdk=false
+    local skip_build=false
+    local skip_upload=false
+    local verbose=false
+    
+    # Parse options
+    shift  # Remove environment from arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --skip-cdk)
+                skip_cdk=true
+                shift
+                ;;
+            --skip-build)
+                skip_build=true
+                shift
+                ;;
+            --skip-upload)
+                skip_upload=true
+                shift
+                ;;
+            --verbose|-v)
+                verbose=true
+                shift
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+    
+    print_info "Starting deployment to $environment environment..."
+    print_info "Options: skip-cdk=$skip_cdk, skip-build=$skip_build, skip-upload=$skip_upload, verbose=$verbose"
+    
+    # Check prerequisites
+    check_prerequisites
+    
+    # Step 1: Deploy CDK infrastructure (unless skipped)
+    if [ "$skip_cdk" = false ]; then
+        deploy_cdk "$environment"
+    else
+        print_warning "Skipping CDK infrastructure deployment"
+    fi
+    
+    # Step 2: Generate environment file from CloudFormation
+    generate_env_file "$environment"
+    
+    # Step 3: Deploy frontend application
+    local deploy_args=""
+    if [ "$skip_build" = true ]; then
+        deploy_args="$deploy_args --skip-build"
+    fi
+    if [ "$skip_upload" = true ]; then
+        deploy_args="$deploy_args --skip-upload"
+    fi
+    if [ "$verbose" = true ]; then
+        deploy_args="$deploy_args --verbose"
+    fi
+    
+    deploy_frontend "$environment" $deploy_args
+    
+    echo ""
+    print_success "🎉 Deployment completed successfully!"
+    print_info "📋 Deployment Summary:"
+    print_info "   Environment: $environment"
+    print_info "   CDK Infrastructure: $([ "$skip_cdk" = true ] && echo "Skipped" || echo "Deployed")"
+    print_info "   Frontend Build: $([ "$skip_build" = true ] && echo "Skipped" || echo "Completed")"
+    print_info "   S3 Upload: $([ "$skip_upload" = true ] && echo "Skipped" || echo "Completed")"
+    print_info ""
+    print_info "🌐 Check the output above for the CloudFront distribution URL"
 }
 
 # Parse command line arguments
