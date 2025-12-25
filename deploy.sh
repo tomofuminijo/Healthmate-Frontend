@@ -113,6 +113,29 @@ activate_venv() {
     cd "$SCRIPT_DIR"
 }
 
+# Function to generate environment file
+generate_env_file() {
+    local environment="$1"
+    
+    print_info "Generating .env.$environment file from CloudFormation..."
+    
+    # Activate virtual environment
+    activate_venv
+    
+    # Run environment file generator
+    cd "$SCRIPTS_DIR"
+    python generate_env.py "$environment"
+    local exit_code=$?
+    cd "$SCRIPT_DIR"
+    
+    if [ $exit_code -eq 0 ]; then
+        print_success "Environment file .env.$environment generated successfully"
+    else
+        print_error "Failed to generate environment file"
+        exit $exit_code
+    fi
+}
+
 # Main deployment function
 deploy() {
     local environment="$1"
@@ -122,6 +145,9 @@ deploy() {
     
     # Check prerequisites
     check_prerequisites
+    
+    # Generate environment file from CloudFormation
+    generate_env_file "$environment"
     
     # Activate virtual environment
     activate_venv

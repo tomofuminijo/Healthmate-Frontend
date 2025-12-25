@@ -12,42 +12,56 @@ Healthmate-Frontend は以下の3つの環境をサポートします：
 - **stage**: ステージング環境
 - **prod**: 本番環境
 
-### 環境変数ファイル
+### 🔧 動的環境ファイル生成
 
-各環境に対応した環境変数ファイルを使用します：
+**重要**: 環境変数ファイル（.env.dev/.env.stage/.env.prod）は、デプロイ時にCloudFormationから**自動生成**されます。
 
-| ファイル | 環境 | 説明 |
-|---------|------|------|
-| `.env.dev` | 開発環境 | 開発用API エンドポイントとCognito設定 |
-| `.env.stage` | ステージング環境 | ステージング用設定 |
-| `.env.prod` | 本番環境 | 本番用設定 |
-| `.env.example` | テンプレート | 環境変数のテンプレート |
+#### 自動生成される環境変数
 
-### 環境別設定例
+| 変数名 | 取得元 | 説明 |
+|--------|--------|------|
+| `VITE_COGNITO_USER_POOL_ID` | Healthmate-CoreStack-{env} | Cognito User Pool ID |
+| `VITE_COGNITO_CLIENT_ID` | Healthmate-CoreStack-{env} | Cognito Client ID |
+| `VITE_COACHAI_AGENT_ARN` | bedrock-agentcore-control API | CoachAI Agent ARN |
+| `VITE_AWS_REGION` | 設定値 | AWS Region (us-west-2) |
+| `VITE_LOG_LEVEL` | 環境別設定 | ログレベル (dev: DEBUG, others: INFO) |
 
-#### .env.dev
+#### 生成プロセス
+
 ```bash
+# デプロイ実行時に自動実行される
+./deploy.sh dev
+  ↓
+1. CloudFormationからCognito情報を取得
+2. bedrock-agentcore-control APIからCoachAI ARNを取得  
+3. .env.dev ファイルを自動生成
+4. フロントエンドをビルド・デプロイ
+```
+
+#### 手動生成（デバッグ用）
+
+```bash
+cd scripts
+source .venv/bin/activate
+python generate_env.py dev
+```
+
+### 環境変数テンプレート
+
+参考用のテンプレートファイル：
+
+#### .env.example
+```bash
+# Environment Configuration Template
 HEALTHMATE_ENV=dev
-VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-dev
-VITE_MCP_GATEWAY_ENDPOINT=https://api-dev.healthmate.example.com
-VITE_COGNITO_USER_POOL_ID=us-west-2_xxxxxxxxx
-VITE_COGNITO_CLIENT_ID=dev-client-id
+VITE_AWS_REGION=us-west-2
+VITE_COGNITO_USER_POOL_ID=
+VITE_COGNITO_CLIENT_ID=
 VITE_COGNITO_REGION=us-west-2
+VITE_API_BASE_URL=http://localhost:3000
+VITE_COACHAI_AGENT_ARN=
+VITE_LOG_LEVEL=DEBUG
 ```
-
-#### .env.stage
-```bash
-HEALTHMATE_ENV=stage
-VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-stage
-VITE_MCP_GATEWAY_ENDPOINT=https://api-stage.healthmate.example.com
-VITE_COGNITO_USER_POOL_ID=us-west-2_yyyyyyyyy
-VITE_COGNITO_CLIENT_ID=stage-client-id
-VITE_COGNITO_REGION=us-west-2
-```
-
-#### .env.prod
-```bash
-HEALTHMATE_ENV=prod
 VITE_COACHAI_AGENT_ARN=arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai
 VITE_MCP_GATEWAY_ENDPOINT=https://api.healthmate.example.com
 VITE_COGNITO_USER_POOL_ID=us-west-2_zzzzzzzzz
