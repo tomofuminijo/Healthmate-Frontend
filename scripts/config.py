@@ -39,7 +39,7 @@ class DeploymentConfig:
         
         # Initialize CloudFormation client
         cf_client = boto3.client('cloudformation', region_name=region)
-        stack_name = f"HealthmateFrontendHosting-{environment.title()}"
+        stack_name = f"Healthmate-FrontendStack-{environment}"
         
         try:
             # Get stack outputs

@@ -37,7 +37,7 @@ def main():
     # Create the hosting stack
     stack = HealthmateFrontendHostingStack(
         app,
-        f"HealthmateFrontendHosting-{environment.title()}",
+        f"Healthmate-FrontendStack-{environment}",
         props,
         env=cdk.Environment(
             account=os.environ.get("CDK_DEFAULT_ACCOUNT"),

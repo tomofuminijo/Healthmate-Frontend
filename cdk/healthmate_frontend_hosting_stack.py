@@ -303,7 +303,7 @@ class HealthmateFrontendHostingStack(Stack):
             "BucketName",
             value=self.bucket_name,
             description="S3 bucket name for static assets",
-            export_name=f"HealthmateFrontend-{self.props.environment}-BucketName"
+            export_name=f"Healthmate-Frontend-{self.props.environment}-BucketName"
         )
         
         CfnOutput(
@@ -311,7 +311,7 @@ class HealthmateFrontendHostingStack(Stack):
             "DistributionId",
             value=self.distribution.distribution_id,
             description="CloudFront distribution ID",
-            export_name=f"HealthmateFrontend-{self.props.environment}-DistributionId"
+            export_name=f"Healthmate-Frontend-{self.props.environment}-DistributionId"
         )
         
         CfnOutput(
@@ -319,7 +319,7 @@ class HealthmateFrontendHostingStack(Stack):
             "DistributionDomainName",
             value=self.distribution_domain_name,
             description="CloudFront distribution domain name",
-            export_name=f"HealthmateFrontend-{self.props.environment}-DistributionDomain"
+            export_name=f"Healthmate-Frontend-{self.props.environment}-DistributionDomain"
         )
         
         CfnOutput(
@@ -327,5 +327,5 @@ class HealthmateFrontendHostingStack(Stack):
             "WebsiteUrl",
             value=f"https://{self.distribution_domain_name}",
             description="Website URL",
-            export_name=f"HealthmateFrontend-{self.props.environment}-WebsiteUrl"
+            export_name=f"Healthmate-Frontend-{self.props.environment}-WebsiteUrl"
         )
