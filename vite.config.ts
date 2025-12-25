@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   // 環境変数を読み込み
   const env = loadEnv(mode, process.cwd(), '')
   
+  // アプリバージョンを生成（ビルド時のタイムスタンプ）
+  const appVersion = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', '-')
+  
   return {
     plugins: [react()],
     resolve: {
@@ -19,6 +22,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // HEALTHMATE_ENVをVite環境変数として利用可能にする
       'import.meta.env.HEALTHMATE_ENV': JSON.stringify(env.HEALTHMATE_ENV || mode),
+      // アプリバージョンを埋め込み（キャッシュ管理用）
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     },
     build: {
       rollupOptions: {

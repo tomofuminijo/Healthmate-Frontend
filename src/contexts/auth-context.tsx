@@ -35,12 +35,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
 
   /**
    * 認証状態の初期化
+   * ハイブリッド戦略 + Amplify内部状態確認
    */
   const initializeAuth = async () => {
     try {
       setIsLoading(true);
       
-      // sessionStorageから認証セッションを復元
+      // 1. ローカルストレージから認証セッションを復元
       const savedAuthSession = AuthSessionManager.loadAuthSession();
       
       if (savedAuthSession) {
@@ -58,6 +59,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
           AuthSessionManager.clearAuthSession();
           setAuthSession(null);
         }
+      } else {
+        // 2. ローカルストレージが空の場合、Amplify内部状態を確認
+        await checkAmplifyAuthState();
       }
     } catch (error) {
       console.error('Auth initialization failed:', error);
@@ -65,6 +69,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       setAuthSession(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  /**
+   * Amplify内部状態の確認
+   * ブラウザリフレッシュ後にAmplifyが保持しているトークンを確認
+   */
+  const checkAmplifyAuthState = async () => {
+    try {
+      // Amplifyの内部状態からセッション情報を取得
+      const session = await cognitoClient.getCurrentSession();
+      
+      if (session && session.jwtToken) {
+        // Amplifyが有効なトークンを保持している場合、ローカルセッションを再構築
+        console.log('Amplify内部状態からセッションを復元:', session.userId);
+        
+        const reconstructedSession: AuthSession = {
+          userId: session.userId,
+          username: session.username,
+          email: session.email || '',
+          jwtToken: session.jwtToken,
+          refreshToken: session.refreshToken,
+          tokenExpiry: session.tokenExpiry,
+          refreshTokenExpiry: session.refreshTokenExpiry,
+          isActive: true,
+        };
+        
+        // 再構築したセッションを保存
+        AuthSessionManager.saveAuthSession(reconstructedSession);
+        setAuthSession(reconstructedSession);
+      } else {
+        // Amplifyにも有効なトークンがない場合、完全にログアウト状態
+        setAuthSession(null);
+      }
+    } catch (error) {
+      console.error('Failed to check Amplify auth state:', error);
+      // Amplify状態確認に失敗した場合、ログアウト状態とする
+      setAuthSession(null);
     }
   };
 

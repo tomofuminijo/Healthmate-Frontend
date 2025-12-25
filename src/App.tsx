@@ -9,6 +9,7 @@ import { ChatInterface } from '@/components/chat-interface';
 import { ErrorBoundary } from '@/components/error-display';
 import { MobileSidebar, DesktopSidebar } from '@/components/mobile-sidebar';
 import { config } from '@/config/environment';
+import { CacheManager } from '@/lib/cache-manager';
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
@@ -182,6 +183,22 @@ const Dashboard: React.FC = () => {
 };
 
 function App() {
+  // アプリケーション初期化時にキャッシュチェックを実行
+  React.useEffect(() => {
+    try {
+      console.log('🚀 Healthmate App initializing...');
+      
+      // キャッシュバージョンチェック（新しいデプロイ後の問題を防ぐ）
+      CacheManager.checkAndClearCacheIfNeeded();
+      
+      console.log('✅ App initialization completed');
+    } catch (error) {
+      console.error('❌ App initialization failed:', error);
+      // 初期化エラーが発生した場合、安全のためキャッシュをクリア
+      CacheManager.clearAllCache();
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <EnvironmentProvider>

@@ -133,8 +133,9 @@ deploy() {
     cd "$SCRIPT_DIR"
     
     if [ $exit_code -eq 0 ]; then
+        echo ""
         print_success "Deployment completed successfully!"
-        print_info "Your application is now available at the CloudFront distribution URL"
+        print_info "Check the output above for the CloudFront distribution URL"
     else
         print_error "Deployment failed with exit code $exit_code"
         exit $exit_code

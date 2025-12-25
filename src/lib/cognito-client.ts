@@ -186,6 +186,59 @@ export class CognitoClient {
   }
 
   /**
+   * 現在のセッション情報を取得（Amplify内部状態から）
+   * ブラウザリフレッシュ後の認証状態復元に使用
+   */
+  async getCurrentSession(): Promise<AuthSession | null> {
+    try {
+      console.log('Getting current session from Amplify');
+      
+      // Amplifyの内部状態から現在のセッションを取得
+      const [user, session] = await Promise.all([
+        getCurrentUser(),
+        fetchAuthSession(),
+      ]);
+
+      // 有効なトークンが存在するかチェック
+      if (!session.tokens?.accessToken || !user) {
+        console.log('No valid tokens or user found in Amplify');
+        return null;
+      }
+
+      // トークンの有効期限をチェック
+      const tokenExpiry = new Date(session.tokens.accessToken.payload.exp! * 1000);
+      const now = new Date();
+      
+      if (tokenExpiry <= now) {
+        console.log('Access token has expired');
+        return null;
+      }
+
+      const authSession: AuthSession = {
+        userId: user.userId,
+        username: user.username,
+        email: user.signInDetails?.loginId || `${user.username}@example.com`,
+        jwtToken: session.tokens.accessToken.toString(),
+        refreshToken: session.tokens.idToken?.toString() || '',
+        tokenExpiry: tokenExpiry,
+        refreshTokenExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30日後（概算）
+        isActive: true,
+      };
+
+      console.log('Current session retrieved from Amplify:', {
+        userId: authSession.userId,
+        username: authSession.username,
+        tokenExpiry: authSession.tokenExpiry,
+      });
+
+      return authSession;
+    } catch (error) {
+      console.error('Failed to get current session from Amplify:', error);
+      return null;
+    }
+  }
+
+  /**
    * 現在のユーザー情報を取得
    */
   async getCurrentUser(): Promise<{ userId: string; username: string; email: string } | null> {

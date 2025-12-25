@@ -2,21 +2,36 @@ import { AuthSession } from '@/types/auth';
 
 /**
  * AuthSessionManager - 認証セッション管理クラス
- * sessionStorageを使用してJWT/Refresh Token管理を行う
+ * localStorage + sessionStorage ハイブリッド戦略でJWT/Refresh Token管理を行う
  */
 export class AuthSessionManager {
-  private static readonly AUTH_STORAGE_KEY = 'healthmate-auth-session';
+  private static readonly AUTH_SESSION_KEY = 'healthmate-auth-session';
+  private static readonly PERSISTENT_SESSION_KEY = 'healthmate-persistent-session';
 
   /**
-   * 認証セッションをsessionStorageに保存
+   * 認証セッションを保存（ハイブリッド戦略）
+   * - sessionStorage: 完全なセッション情報（JWT Token含む）
+   * - localStorage: 永続化が必要な情報（Refresh Token、ユーザーID）
    */
   static saveAuthSession(authSession: AuthSession): void {
     try {
-      sessionStorage.setItem(this.AUTH_STORAGE_KEY, JSON.stringify({
+      const sessionData = {
         ...authSession,
         tokenExpiry: authSession.tokenExpiry.toISOString(),
         refreshTokenExpiry: authSession.refreshTokenExpiry.toISOString(),
-      }));
+      };
+
+      // sessionStorage: 完全なセッション情報
+      sessionStorage.setItem(this.AUTH_SESSION_KEY, JSON.stringify(sessionData));
+
+      // localStorage: 永続化が必要な情報のみ
+      const persistentData = {
+        userId: authSession.userId,
+        username: authSession.username,
+        refreshToken: authSession.refreshToken,
+        refreshTokenExpiry: authSession.refreshTokenExpiry.toISOString(),
+      };
+      localStorage.setItem(this.PERSISTENT_SESSION_KEY, JSON.stringify(persistentData));
     } catch (error) {
       console.error('Failed to save auth session:', error);
       throw new Error('認証セッションの保存に失敗しました');
@@ -24,21 +39,49 @@ export class AuthSessionManager {
   }
 
   /**
-   * sessionStorageから認証セッションを読み込み
+   * 認証セッションを読み込み（ハイブリッド戦略）
+   * 1. sessionStorageから完全なセッションを試行
+   * 2. sessionStorageが空の場合、localStorageから永続化データを復元
    */
   static loadAuthSession(): AuthSession | null {
     try {
-      const stored = sessionStorage.getItem(this.AUTH_STORAGE_KEY);
-      if (!stored) {
-        return null;
+      // 1. sessionStorageから完全なセッションを試行
+      const sessionStored = sessionStorage.getItem(this.AUTH_SESSION_KEY);
+      if (sessionStored) {
+        const parsed = JSON.parse(sessionStored);
+        return {
+          ...parsed,
+          tokenExpiry: new Date(parsed.tokenExpiry),
+          refreshTokenExpiry: new Date(parsed.refreshTokenExpiry),
+        };
       }
 
-      const parsed = JSON.parse(stored);
-      return {
-        ...parsed,
-        tokenExpiry: new Date(parsed.tokenExpiry),
-        refreshTokenExpiry: new Date(parsed.refreshTokenExpiry),
-      };
+      // 2. sessionStorageが空の場合、localStorageから永続化データを復元
+      const persistentStored = localStorage.getItem(this.PERSISTENT_SESSION_KEY);
+      if (persistentStored) {
+        const parsed = JSON.parse(persistentStored);
+        
+        // Refresh Tokenが有効かチェック
+        const refreshTokenExpiry = new Date(parsed.refreshTokenExpiry);
+        if (refreshTokenExpiry > new Date()) {
+          // 部分的なセッション情報を返す（JWT Tokenは後で更新される）
+          return {
+            userId: parsed.userId,
+            username: parsed.username,
+            email: '', // 空のemail（後で更新）
+            jwtToken: '', // 空のJWT Token（後で更新）
+            refreshToken: parsed.refreshToken,
+            tokenExpiry: new Date(), // 即座に期限切れとして扱う
+            refreshTokenExpiry: refreshTokenExpiry,
+            isActive: true,
+          };
+        } else {
+          // Refresh Tokenも期限切れの場合、永続化データをクリア
+          this.clearPersistentSession();
+        }
+      }
+
+      return null;
     } catch (error) {
       console.error('Failed to load auth session:', error);
       // 破損したデータをクリア
@@ -48,13 +91,25 @@ export class AuthSessionManager {
   }
 
   /**
-   * 認証セッションをsessionStorageから削除
+   * 認証セッションをクリア（両方のストレージから削除）
    */
   static clearAuthSession(): void {
     try {
-      sessionStorage.removeItem(this.AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(this.AUTH_SESSION_KEY);
+      this.clearPersistentSession();
     } catch (error) {
       console.error('Failed to clear auth session:', error);
+    }
+  }
+
+  /**
+   * 永続化セッションをlocalStorageから削除
+   */
+  static clearPersistentSession(): void {
+    try {
+      localStorage.removeItem(this.PERSISTENT_SESSION_KEY);
+    } catch (error) {
+      console.error('Failed to clear persistent session:', error);
     }
   }
 

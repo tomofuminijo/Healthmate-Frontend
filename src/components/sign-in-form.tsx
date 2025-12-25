@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { BrandHeader } from '@/components/brand-header';
 import { NewPasswordForm } from '@/components/new-password-form';
+import { CacheManager } from '@/lib/cache-manager';
 import { 
   classifyAuthError, 
   validateSignInCredentials, 
@@ -20,6 +21,7 @@ export const SignInForm: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const { signIn, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -333,6 +335,58 @@ export const SignInForm: React.FC = () => {
               {error && `エラーが発生しました: ${error.userFriendlyMessage}`}
               {validationErrors.length > 0 && `入力エラーが${validationErrors.length}件あります。`}
             </div>
+
+            {/* デバッグ機能（エラー発生時のみ表示） */}
+            {error && (
+              <div className="mt-4 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDebugInfo(!showDebugInfo)}
+                  className="w-full text-xs"
+                >
+                  {showDebugInfo ? 'デバッグ情報を隠す' : 'デバッグ情報を表示'}
+                </Button>
+                
+                {showDebugInfo && (
+                  <div className="bg-gray-50 p-3 rounded-md text-xs space-y-2">
+                    <div>
+                      <strong>キャッシュ情報:</strong>
+                      <pre className="mt-1 text-xs overflow-x-auto">
+                        {JSON.stringify(CacheManager.getDebugInfo(), null, 2)}
+                      </pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          CacheManager.clearAuthCache();
+                          setError(null);
+                          alert('認証キャッシュをクリアしました');
+                        }}
+                        className="text-xs"
+                      >
+                        認証キャッシュクリア
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          CacheManager.forceReload();
+                        }}
+                        className="text-xs"
+                      >
+                        強制リロード
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

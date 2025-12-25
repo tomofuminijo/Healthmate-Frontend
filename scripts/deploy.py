@@ -372,6 +372,18 @@ def main():
                 upload_results = upload_details['results']
                 print(f"📊 Upload: {upload_results['success_count']} files, {upload_results['total_size_mb']} MB")
         
+        # Print CloudFront distribution URL
+        try:
+            from config import DeploymentConfig
+            deployment_config = DeploymentConfig.from_cloudformation(args.environment)
+            print(f"\n🌐 CloudFront Distribution URL:")
+            print(f"   {deployment_config.website_url}")
+            print(f"\n📋 Distribution Details:")
+            print(f"   Domain: {deployment_config.distribution_domain_name}")
+            print(f"   Distribution ID: {deployment_config.distribution_id}")
+        except Exception as e:
+            print(f"\n⚠️  Could not retrieve CloudFront URL: {e}")
+        
         sys.exit(0)
     else:
         print(f"\n❌ Deployment failed")
