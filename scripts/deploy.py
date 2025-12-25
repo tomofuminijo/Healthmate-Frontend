@@ -126,29 +126,52 @@ class HealthmateFrontendDeployer:
         # Load environment variables from .env files
         env_vars = os.environ.copy()
         
-        # Try to load environment-specific .env file
+        # Try to load environment files in order of precedence (lowest to highest)
         env_files = [
-            self.project_root / f'.env.{self.environment}',
-            self.project_root / '.env.local',
-            self.project_root / '.env'
+            self.project_root / '.env',  # Base environment file (lowest priority)
+            self.project_root / '.env.local',  # Local overrides
+            self.project_root / f'.env.{self.environment}',  # Environment-specific (highest priority)
         ]
         
+        loaded_vite_vars = {}
         for env_file in env_files:
             if env_file.exists():
-                self.logger.debug(f"Loading environment variables from {env_file}")
+                self.logger.info(f"Loading environment variables from {env_file}")
                 try:
                     with open(env_file, 'r') as f:
                         for line in f:
                             line = line.strip()
                             if line and not line.startswith('#') and '=' in line:
                                 key, value = line.split('=', 1)
-                                env_vars[key.strip()] = value.strip()
+                                key = key.strip()
+                                value = value.strip()
+                                env_vars[key] = value
+                                # Track VITE_ variables for logging
+                                if key.startswith('VITE_'):
+                                    loaded_vite_vars[key] = value
+                                    self.logger.info(f"Loaded {key}={value}")
                 except Exception as e:
                     self.logger.warning(f"Failed to load {env_file}: {e}")
         
         # Set deployment-specific environment variables
         env_vars['HEALTHMATE_ENV'] = self.environment
         env_vars['NODE_ENV'] = 'production'
+        
+        # Log all VITE variables that will be passed to build
+        self.logger.info("=== Environment Variables for Build ===")
+        for key, value in env_vars.items():
+            if key.startswith('VITE_'):
+                if 'ARN' in key:
+                    self.logger.info(f"{key}={value}")
+                else:
+                    self.logger.info(f"{key}={value}")
+        self.logger.info("=== End Environment Variables ===")
+        
+        # Specifically check VITE_COACHAI_AGENT_ARN
+        if 'VITE_COACHAI_AGENT_ARN' in env_vars:
+            self.logger.info(f"✅ VITE_COACHAI_AGENT_ARN is set to: {env_vars['VITE_COACHAI_AGENT_ARN']}")
+        else:
+            self.logger.error("❌ VITE_COACHAI_AGENT_ARN is NOT set!")
         
         try:
             start_time = time.time()
