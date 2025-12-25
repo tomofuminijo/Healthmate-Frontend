@@ -57,29 +57,6 @@ class DeploymentConfig:
             )
         except Exception as e:
             raise RuntimeError(f"Failed to get CloudFormation outputs for stack {stack_name}: {e}")
-    
-    @classmethod
-    def from_environment(cls, environment: str) -> 'DeploymentConfig':
-        """Create deployment config from environment variables (fallback method)."""
-        if environment not in ['dev', 'stage', 'prod']:
-            raise ValueError(f"Invalid environment: {environment}")
-        
-        # These will be populated from CloudFormation outputs after stack deployment
-        bucket_name = os.environ.get(f'HEALTHMATE_FRONTEND_{environment.upper()}_BUCKET_NAME', '')
-        distribution_id = os.environ.get(f'HEALTHMATE_FRONTEND_{environment.upper()}_DISTRIBUTION_ID', '')
-        distribution_domain = os.environ.get(f'HEALTHMATE_FRONTEND_{environment.upper()}_DISTRIBUTION_DOMAIN', '')
-        region = os.environ.get('AWS_REGION', 'us-west-2')
-        
-        website_url = f"https://{distribution_domain}" if distribution_domain else ""
-        
-        return cls(
-            environment=environment,
-            bucket_name=bucket_name,
-            distribution_id=distribution_id,
-            distribution_domain_name=distribution_domain,
-            website_url=website_url,
-            region=region
-        )
 
 
 @dataclass
