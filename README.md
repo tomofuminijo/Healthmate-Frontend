@@ -225,7 +225,7 @@ src/
 |------|-------------------|---------------------------|
 | dev | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-dev` | `https://api-dev.healthmate.example.com` |
 | stage | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-stage` | `https://api-stage.healthmate.example.com` |
-| prod | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai` | `https://api.healthmate.example.com` |
+| prod | `arn:aws:bedrock-agentcore:us-west-2:123456789012:agent/healthmate_coach_ai-prod` | `https://api-prod.healthmate.example.com` |
 
 ## 開発ガイドライン
 
