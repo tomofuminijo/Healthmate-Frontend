@@ -70,17 +70,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     code: ({ children, className }) => {
                       const isInline = !className;
                       return isInline ? (
-                        <code className="bg-muted/50 px-1 py-0.5 rounded text-xs font-mono">
+                        <code className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-1.5 py-0.5 rounded text-xs font-mono border border-slate-200 dark:border-slate-700">
                           {children}
                         </code>
                       ) : (
-                        <code className="block bg-muted/50 p-2 rounded text-xs font-mono overflow-x-auto">
+                        <code className="block bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded text-xs font-mono overflow-x-auto border border-slate-200 dark:border-slate-700">
                           {children}
                         </code>
                       );
                     },
                     pre: ({ children }) => (
-                      <pre className="bg-muted/50 p-3 rounded-md overflow-x-auto mb-2">
+                      <pre className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-md overflow-x-auto mb-2 border border-slate-200 dark:border-slate-700">
                         {children}
                       </pre>
                     ),

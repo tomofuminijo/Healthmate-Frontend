@@ -159,6 +159,26 @@
   height: calc(100% - 5rem);
 }
 
+/* コードブロックの可読性向上 */
+.prose code {
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-1.5 py-0.5 rounded text-xs font-mono border border-slate-200 dark:border-slate-700;
+}
+
+.prose pre {
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-md border border-slate-200 dark:border-slate-700;
+}
+
+.prose pre code {
+  @apply bg-transparent border-0 p-0 text-inherit;
+}
+
+/* Markdownコンテンツ内のコードブロックの追加スタイル */
+.prose .hljs,
+.prose code[class*="language-"],
+.prose pre[class*="language-"] {
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200;
+}
+
 /* フォーカス管理の改善 */
 .focus-trap {
   outline: none;
