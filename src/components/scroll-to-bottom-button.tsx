@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface ScrollToBottomButtonProps {
   isVisible: boolean;
@@ -120,7 +121,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       if (event.ctrlKey && event.shiftKey && event.key === 'S') {
         event.preventDefault();
         setForceVisible(prev => {
-          console.log('🔧 Debug: Force visible toggled:', !prev);
+          logger.debug('🔧 Debug: Force visible toggled:', !prev);
           return !prev;
         });
       }
@@ -130,7 +131,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
         event.preventDefault();
         const scrollElement = scrollContainerRef.current;
         if (scrollElement) {
-          console.log('🔍 DOM Investigation:', {
+          logger.debug('🔍 DOM Investigation:', {
             element: scrollElement,
             tagName: scrollElement.tagName,
             className: scrollElement.className,
@@ -175,7 +176,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
             const shouldShow = target.getAttribute('data-should-show') === 'true';
             
             if (shouldShow) {
-              console.log('🎭 Transition completion detected, rechecking scroll');
+              logger.debug('🎭 Transition completion detected, rechecking scroll');
               
               // 遷移完了後にスクロール状態を再チェック
               setTimeout(() => {
@@ -187,7 +188,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
                   const isNearBottom = distanceFromBottom <= 100;
                   const shouldShowButton = isScrollable && !isNearBottom;
                   
-                  console.log('🎭 Post-transition scroll check:', {
+                  logger.debug('🎭 Post-transition scroll check:', {
                     scrollTop,
                     scrollHeight,
                     clientHeight,
@@ -236,7 +237,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
               const isNearBottom = distanceFromBottom <= 100;
               const shouldShow = isScrollable && !isNearBottom;
               
-              console.log('📊 Messages change check:', {
+              logger.debug('📊 Messages change check:', {
                 hasMessages,
                 scrollTop,
                 scrollHeight,
@@ -427,7 +428,7 @@ export const ScrollToBottomButtonContainer: React.FC<ScrollToBottomButtonContain
       }, prefersReducedMotion ? 50 : 300);
       
     } catch (error) {
-      console.error('❌ Scroll error:', error);
+      logger.error('❌ Scroll error:', error);
       // 最後の手段：scrollTopを直接設定
       scrollElement.scrollTop = scrollElement.scrollHeight;
     }

@@ -58,6 +58,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# TypeScript src/lib should not be ignored
+!src/lib/
+
 # Virtual environments
 .venv/
 venv/

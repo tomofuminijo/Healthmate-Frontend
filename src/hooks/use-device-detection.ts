@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * デバイスタイプを検出するカスタムフック
@@ -28,7 +29,7 @@ export const useDeviceDetection = () => {
       setIsMobile(isMobileDevice);
       setIsTouchDevice(hasTouchScreen);
 
-      console.log('📱 Device detection:', {
+      logger.debug('📱 Device detection:', {
         isMobile: isMobileDevice,
         isTouchDevice: hasTouchScreen,
         screenWidth: window.innerWidth,

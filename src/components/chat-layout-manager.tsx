@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface ChatLayoutManagerProps {
   hasMessages: boolean;
@@ -39,7 +40,7 @@ const usePrefersReducedMotion = (): boolean => {
     // 設定変更を監視
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
-      console.log('🎭 Motion preference changed:', e.matches ? 'reduced' : 'normal');
+      logger.debug('🎭 Motion preference changed:', e.matches ? 'reduced' : 'normal');
     };
     
     mediaQuery.addEventListener('change', handleChange);
@@ -75,7 +76,7 @@ export const ChatLayoutManager: React.FC<ChatLayoutManagerProps> = ({
     const newMode = hasMessages ? 'active' : 'empty';
     
     if (newMode !== layoutState.mode) {
-      console.log(`🔄 Layout transition: ${layoutState.mode} → ${newMode}`, {
+      logger.debug(`🔄 Layout transition: ${layoutState.mode} → ${newMode}`, {
         prefersReducedMotion
       });
       
@@ -85,7 +86,7 @@ export const ChatLayoutManager: React.FC<ChatLayoutManagerProps> = ({
           mode: newMode, 
           isTransitioning: false 
         });
-        console.log(`✅ Layout transition completed immediately (reduced motion): ${newMode}`);
+        logger.debug(`✅ Layout transition completed immediately (reduced motion): ${newMode}`);
         return;
       }
       
@@ -101,7 +102,7 @@ export const ChatLayoutManager: React.FC<ChatLayoutManagerProps> = ({
           mode: newMode, 
           isTransitioning: false 
         });
-        console.log(`✅ Layout transition completed: ${newMode}`);
+        logger.debug(`✅ Layout transition completed: ${newMode}`);
       }, 300);
 
       return () => clearTimeout(transitionTimeout);

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 interface SwipeGestureOptions {
   onSwipeLeft?: () => void;
@@ -127,7 +128,7 @@ export const useEdgeSwipeGesture = (options: {
         Math.abs(distY) <= 100; // 垂直方向100px以内
 
       if (isValidEdgeSwipe && onEdgeSwipeRight) {
-        console.log('🖐️ Edge swipe detected:', { distX, distY, elapsedTime });
+        logger.debug('🖐️ Edge swipe detected:', { distX, distY, elapsedTime });
         onEdgeSwipeRight();
       }
 

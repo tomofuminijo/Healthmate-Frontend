@@ -8,6 +8,7 @@ import {
   validateNewPassword,
   type AuthError
 } from '@/lib/auth-error-handler';
+import { logger } from '@/lib/logger';
 
 interface NewPasswordFormProps {
   onCancel: () => void;
@@ -82,7 +83,7 @@ export const NewPasswordForm: React.FC<NewPasswordFormProps> = ({ onCancel }) =>
       await completeNewPassword(newPassword);
       // 成功時は親コンポーネントで処理される
     } catch (error) {
-      console.error('New password completion error:', error);
+      logger.error('New password completion error:', error);
       
       // エラーを分類して適切なメッセージを表示
       const authError = classifyAuthError(error);

@@ -13,6 +13,7 @@ import {
   AuthErrorType,
   type AuthError
 } from '@/lib/auth-error-handler';
+import { logger } from '@/lib/logger';
 
 export const SignInForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -104,7 +105,7 @@ export const SignInForm: React.FC = () => {
       await signIn(username.trim(), password);
       // リダイレクトはuseEffectで処理される
     } catch (error) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error:', error);
       
       // エラーを分類して適切なメッセージを表示
       const authError = classifyAuthError(error);
@@ -118,7 +119,7 @@ export const SignInForm: React.FC = () => {
       setError(authError);
       
       // 安全なエラーログを出力（機密情報を除外）
-      console.error('Authentication failed:', {
+      logger.error('Authentication failed:', {
         type: authError.type,
         retryable: authError.retryable,
         timestamp: new Date().toISOString()

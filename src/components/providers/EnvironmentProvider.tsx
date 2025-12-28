@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { config, validateConfig, type Environment } from '@/config/environment';
+import { logger } from '@/lib/logger';
 
 interface EnvironmentContextType {
   environment: Environment;
@@ -33,7 +34,7 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
 
         // 開発環境での設定ログ出力
         if (config.isDevelopment()) {
-          console.log('Environment initialized:', {
+          logger.debug('Environment initialized:', {
             environment: config.environment,
             isValid: validation.isValid,
             errors: validation.errors,
@@ -42,7 +43,7 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
 
         // 設定エラーがある場合の処理
         if (!validation.isValid) {
-          console.error('Environment configuration errors:', validation.errors);
+          logger.error('Environment configuration errors:', validation.errors);
           
           // 本番環境では致命的エラーとして扱う
           if (config.isProduction()) {
@@ -50,7 +51,7 @@ export function EnvironmentProvider({ children }: EnvironmentProviderProps) {
           }
         }
       } catch (error) {
-        console.error('Failed to initialize environment:', error);
+        logger.error('Failed to initialize environment:', error);
         
         // 本番環境では再スローして、アプリケーションを停止
         if (config.isProduction()) {

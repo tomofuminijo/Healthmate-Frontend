@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { MessageBubble } from './message-bubble';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface MessageListProps {
   messages: Message[];
@@ -103,7 +104,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   const [scrollTimeout, setScrollTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // デバッグログ
-  console.log('MessageList render:', { messageCount: messages.length });
+  logger.debug('MessageList render:', { messageCount: messages.length });
 
   // メッセージを日付区切りと共に処理
   const messageItems = React.useMemo(() => {
@@ -171,7 +172,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
   const scrollToUserMessage = useCallback((messageId: string) => {
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
     if (messageElement && scrollRef.current) {
-      console.log('👤 Scrolling to user message:', messageId);
+      logger.debug('👤 Scrolling to user message:', messageId);
       
       // モーション軽減設定を確認
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -197,7 +198,7 @@ export const MessageList = React.forwardRef<HTMLDivElement, MessageListProps>(({
         behavior: shouldUseSmooth ? 'smooth' : 'auto',
         block: 'end'
       });
-      console.log('🔽 Scrolled to bottom:', shouldUseSmooth ? 'smooth' : 'instant');
+      logger.debug('🔽 Scrolled to bottom:', shouldUseSmooth ? 'smooth' : 'instant');
       
       // コールバック実行
       if (onScrollToBottom) {

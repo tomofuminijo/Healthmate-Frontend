@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from 'react';
 import { ChatSession, Message } from '@/types/chat';
 import { ChatSessionManager } from '@/lib/chat-session-manager';
+import { logger } from '@/lib/logger';
 
 interface ChatContextType {
   chatSessions: ChatSession[];
@@ -47,14 +48,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
    */
   const initializeChatSessions = () => {
     try {
-      console.log('🚀 Initializing chat sessions...');
+      logger.debug('🚀 Initializing chat sessions...');
       setIsLoading(true);
       
       // localStorageからチャットセッションを復元
       const savedChatSessions = ChatSessionManager.loadChatSessions();
       const activeSessionId = ChatSessionManager.loadActiveSessionId();
       
-      console.log('📂 Loaded from localStorage:', {
+      logger.debug('📂 Loaded from localStorage:', {
         savedSessionsCount: savedChatSessions.length,
         activeSessionId,
         savedSessions: savedChatSessions.map(s => ({ id: s.id, title: s.title, messageCount: s.messages.length }))
@@ -62,7 +63,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       
       if (savedChatSessions.length === 0) {
         // 初回訪問時は新しいセッションを作成
-        console.log('🆕 Creating new session (first visit)');
+        logger.debug('🆕 Creating new session (first visit)');
         const newSession = ChatSessionManager.createNewChatSession();
         const sessions = [newSession];
         
@@ -72,7 +73,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         ChatSessionManager.saveChatSessions(sessions);
         ChatSessionManager.saveActiveSessionId(newSession.id);
         
-        console.log('✅ New session created:', {
+        logger.debug('✅ New session created:', {
           sessionId: newSession.id,
           title: newSession.title
         });
@@ -96,7 +97,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         
         setCurrentChatSession(activeSession);
         
-        console.log('✅ Sessions restored:', {
+        logger.debug('✅ Sessions restored:', {
           totalSessions: sortedSessions.length,
           activeSessionId: activeSession.id,
           activeSessionTitle: activeSession.title,
@@ -104,16 +105,16 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         });
       }
     } catch (error) {
-      console.error('❌ Chat initialization failed:', error);
+      logger.error('❌ Chat initialization failed:', error);
       // エラー時は新しいセッションを作成
       const newSession = ChatSessionManager.createNewChatSession();
       setChatSessions([newSession]);
       setCurrentChatSession(newSession);
       
-      console.log('🔄 Fallback session created:', newSession.id);
+      logger.debug('🔄 Fallback session created:', newSession.id);
     } finally {
       setIsLoading(false);
-      console.log('🏁 Chat initialization complete');
+      logger.debug('🏁 Chat initialization complete');
     }
   };
 
@@ -141,7 +142,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const switchChatSession = (chatSessionId: string) => {
     const session = ChatSessionManager.getSessionById(chatSessions, chatSessionId);
     if (!session) {
-      console.error('Session not found:', chatSessionId);
+      logger.error('Session not found:', chatSessionId);
       return;
     }
 
@@ -193,7 +194,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
    * チャットセッションのタイトルを更新
    */
   const updateChatSessionTitle = useCallback((chatSessionId: string, title: string) => {
-    console.log('🏷️ updateChatSessionTitle called:', {
+    logger.debug('🏷️ updateChatSessionTitle called:', {
       chatSessionId,
       title,
       currentSessionsCount: chatSessionsRef.current.length,
@@ -207,7 +208,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       b.updatedAt.getTime() - a.updatedAt.getTime()
     );
     
-    console.log('🔄 Sessions after updateSessionTitle:', {
+    logger.debug('🔄 Sessions after updateSessionTitle:', {
       originalSessionCount: chatSessionsRef.current.length,
       updatedSessionCount: sortedSessions.length,
       targetSessionId: chatSessionId
@@ -231,7 +232,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
    * メッセージを追加
    */
   const addMessage = useCallback((messageData: Omit<Message, 'id' | 'timestamp' | 'chatSessionId'> & { id?: string }) => {
-    console.log('🔍 addMessage function called:', {
+    logger.debug('🔍 addMessage function called:', {
       hasCurrentChatSession: !!currentChatSessionRef.current,
       currentChatSessionId: currentChatSessionRef.current?.id,
       messageRole: messageData.role,
@@ -241,7 +242,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
 
     if (!currentChatSessionRef.current) {
-      console.error('❌ No active chat session - cannot add message:', {
+      logger.error('❌ No active chat session - cannot add message:', {
         chatSessions: chatSessionsRef.current.length,
         messageData
       });
@@ -256,7 +257,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       content: messageData.content,
     };
 
-    console.log('➕ addMessage called:', {
+    logger.debug('➕ addMessage called:', {
       messageId: message.id,
       role: message.role,
       contentLength: message.content.length,
@@ -275,7 +276,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       b.updatedAt.getTime() - a.updatedAt.getTime()
     );
 
-    console.log('🔄 Sessions after addMessageToSession:', {
+    logger.debug('🔄 Sessions after addMessageToSession:', {
       originalSessionCount: chatSessionsRef.current.length,
       updatedSessionCount: updatedSessions.length,
       targetSessionId: currentChatSessionRef.current.id,
@@ -286,7 +287,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // 現在のセッションを更新
     const updatedCurrentSession = ChatSessionManager.getSessionById(sortedSessions, currentChatSessionRef.current.id);
     if (updatedCurrentSession) {
-      console.log('✅ Session updated after addMessage:', {
+      logger.debug('✅ Session updated after addMessage:', {
         sessionId: updatedCurrentSession.id,
         messageCount: updatedCurrentSession.messages.length,
         lastMessageId: updatedCurrentSession.messages[updatedCurrentSession.messages.length - 1]?.id
@@ -300,7 +301,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setChatSessions(sortedSessions);
       setCurrentChatSession(updatedCurrentSession);
       
-      console.log('🔄 After state update - Ref status:', {
+      logger.debug('🔄 After state update - Ref status:', {
         refSessionsCount: chatSessionsRef.current.length,
         refCurrentSessionId: currentChatSessionRef.current?.id,
         refCurrentSessionMessageCount: currentChatSessionRef.current?.messages?.length
@@ -312,8 +313,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         updateChatSessionTitle(currentChatSessionRef.current.id, autoTitle);
       }
     } else {
-      console.error('❌ Failed to get updated session:', currentChatSessionRef.current.id);
-      console.error('Available sessions:', sortedSessions.map(s => ({ id: s.id, messageCount: s.messages.length })));
+      logger.error('❌ Failed to get updated session:', currentChatSessionRef.current.id);
+      logger.error('Available sessions:', sortedSessions.map(s => ({ id: s.id, messageCount: s.messages.length })));
     }
 
     ChatSessionManager.saveChatSessions(sortedSessions);
@@ -323,7 +324,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
    * メッセージを更新（ストリーミング用）
    */
   const updateMessage = useCallback((messageId: string, content: string) => {
-    console.log('🔄 updateMessage called:', {
+    logger.debug('🔄 updateMessage called:', {
       messageId,
       contentLength: content.length,
       content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
@@ -334,19 +335,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
 
     if (!currentChatSessionRef.current) {
-      console.error('❌ No active chat session');
+      logger.error('❌ No active chat session');
       return;
     }
 
     // 最新のchatSessions配列から現在のセッションを取得
     const latestSession = ChatSessionManager.getSessionById(chatSessionsRef.current, currentChatSessionRef.current.id);
     if (!latestSession) {
-      console.error('❌ Latest session not found:', currentChatSessionRef.current.id);
-      console.error('Available sessions:', chatSessionsRef.current.map(s => ({ id: s.id, messageCount: s.messages.length })));
+      logger.error('❌ Latest session not found:', currentChatSessionRef.current.id);
+      logger.error('Available sessions:', chatSessionsRef.current.map(s => ({ id: s.id, messageCount: s.messages.length })));
       return;
     }
 
-    console.log('🔍 Latest session found:', {
+    logger.debug('🔍 Latest session found:', {
       sessionId: latestSession.id,
       messageCount: latestSession.messages.length,
       targetMessageExists: latestSession.messages.some(m => m.id === messageId)
@@ -356,7 +357,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       if (session.id === currentChatSessionRef.current!.id) {
         const updatedMessages = session.messages.map(message => {
           if (message.id === messageId) {
-            console.log('✅ Message found and updated:', messageId);
+            logger.debug('✅ Message found and updated:', messageId);
             return { ...message, content };
           }
           return message;
@@ -365,7 +366,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         // メッセージが見つからなかった場合のエラーログ
         const messageFound = session.messages.some(m => m.id === messageId);
         if (!messageFound) {
-          console.error('❌ Message not found for update:', {
+          logger.error('❌ Message not found for update:', {
             messageId,
             sessionId: session.id,
             availableMessages: session.messages.map(m => ({ id: m.id, role: m.role }))
@@ -386,7 +387,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     // 現在のセッションを更新
     const updatedCurrentSession = ChatSessionManager.getSessionById(sortedSessions, currentChatSessionRef.current.id);
     if (updatedCurrentSession) {
-      console.log('✅ Current session updated, message count:', updatedCurrentSession.messages.length);
+      logger.debug('✅ Current session updated, message count:', updatedCurrentSession.messages.length);
       
       // Refを先に更新（重要！）
       chatSessionsRef.current = sortedSessions;
@@ -396,7 +397,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setChatSessions(sortedSessions);
       setCurrentChatSession(updatedCurrentSession);
     } else {
-      console.error('❌ Failed to get updated current session');
+      logger.error('❌ Failed to get updated current session');
     }
 
     ChatSessionManager.saveChatSessions(sortedSessions);

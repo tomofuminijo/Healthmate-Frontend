@@ -3,6 +3,7 @@
  */
 
 import { fetchWithRetry, ErrorHandler } from '@/lib/error-handler';
+import { logger } from '@/lib/logger';
 
 export interface ChatRequest {
   prompt: string;
@@ -59,7 +60,7 @@ export async function sendChatMessage(
       language: request.language || 'ja'
     };
 
-    console.log('🚀 CoachAI Request Start:', {
+    logger.info('🚀 CoachAI Request Start:', {
       endpoint: endpointUrl,
       sessionId: request.sessionId,
       promptLength: request.prompt.length,
@@ -81,7 +82,7 @@ export async function sendChatMessage(
       throw ErrorHandler.classify(response);
     }
 
-    console.log('📥 CoachAI Response Start:', {
+    logger.info('📥 CoachAI Response Start:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
@@ -91,7 +92,7 @@ export async function sendChatMessage(
     // AgentCore Runtimeからのストリーミングレスポンスを処理
     const responseText = await parseAgentCoreStreamingResponse(response);
     
-    console.log('✅ CoachAI Response Complete:', {
+    logger.info('✅ CoachAI Response Complete:', {
       responseLength: responseText.length,
       sessionId: request.sessionId,
       timestamp: new Date().toISOString()
@@ -103,7 +104,7 @@ export async function sendChatMessage(
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('❌ CoachAI API error:', error);
+    logger.error('❌ CoachAI API error:', error);
     throw ErrorHandler.classify(error);
   }
 }
@@ -140,13 +141,13 @@ async function parseAgentCoreStreamingResponse(response: Response): Promise<stri
               const eventData = JSON.parse(dataJson);
               
               // 受信したイベントデータをログ出力
-              console.log('📡 CoachAI Streaming Event:', eventData);
+              logger.debug('📡 CoachAI Streaming Event:', eventData);
               
               // contentBlockDelta イベントからテキストを抽出
               if (eventData.event && eventData.event.contentBlockDelta) {
                 const delta = eventData.event.contentBlockDelta.delta;
                 if (delta && delta.text) {
-                  console.log('📝 CoachAI Text Chunk:', {
+                  logger.debug('📝 CoachAI Text Chunk:', {
                     text: delta.text,
                     length: delta.text.length,
                     timestamp: new Date().toISOString()
@@ -156,7 +157,7 @@ async function parseAgentCoreStreamingResponse(response: Response): Promise<stri
               }
             } catch (e) {
               // JSON パースエラーは無視
-              console.warn('Failed to parse AgentCore streaming data:', dataJson);
+              logger.warn('Failed to parse AgentCore streaming data:', dataJson);
             }
           }
         }
@@ -186,7 +187,7 @@ export async function* streamChatMessage(
       language: request.language || 'ja'
     };
 
-    console.log('🌊 CoachAI Streaming Request Start:', {
+    logger.info('🌊 CoachAI Streaming Request Start:', {
       endpoint: endpointUrl,
       sessionId: request.sessionId,
       promptLength: request.prompt.length,
@@ -208,7 +209,7 @@ export async function* streamChatMessage(
       throw ErrorHandler.classify(response);
     }
 
-    console.log('🔄 CoachAI Streaming Response Start:', {
+    logger.info('🔄 CoachAI Streaming Response Start:', {
       status: response.status,
       statusText: response.statusText,
       timestamp: new Date().toISOString()
@@ -228,7 +229,7 @@ export async function* streamChatMessage(
         const { done, value } = await reader.read();
         
         if (done) {
-          console.log('🏁 CoachAI Streaming Complete:', {
+          logger.info('🏁 CoachAI Streaming Complete:', {
             totalChunks,
             totalTextLength,
             timestamp: new Date().toISOString()
@@ -248,7 +249,7 @@ export async function* streamChatMessage(
                 const eventData = JSON.parse(dataJson);
                 
                 // 受信したイベントデータをログ出力
-                console.log('🔄 CoachAI Streaming Event (Generator):', eventData);
+                logger.debug('🔄 CoachAI Streaming Event (Generator):', eventData);
                 
                 // contentBlockDelta イベントからテキストを抽出
                 if (eventData.event && eventData.event.contentBlockDelta) {
@@ -257,7 +258,7 @@ export async function* streamChatMessage(
                     totalChunks++;
                     totalTextLength += delta.text.length;
                     
-                    console.log('⚡ CoachAI Text Chunk (Streaming):', {
+                    logger.debug('⚡ CoachAI Text Chunk (Streaming):', {
                       text: delta.text,
                       length: delta.text.length,
                       chunkNumber: totalChunks,
@@ -269,7 +270,7 @@ export async function* streamChatMessage(
                 }
               } catch (e) {
                 // JSON パースエラーは無視
-                console.warn('Failed to parse streaming data:', dataJson);
+                logger.warn('Failed to parse streaming data:', dataJson);
               }
             }
           }
@@ -279,7 +280,7 @@ export async function* streamChatMessage(
       reader.releaseLock();
     }
   } catch (error) {
-    console.error('Streaming chat error:', error);
+    logger.error('Streaming chat error:', error);
     throw ErrorHandler.classify(error);
   }
 }

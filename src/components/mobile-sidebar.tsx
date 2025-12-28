@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { logger } from '@/lib/logger';
 
 interface ChatSession {
   id: string;
@@ -82,7 +83,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   useSwipeGesture({
     onSwipeLeft: () => {
       if (isOpen) {
-        console.log('🖐️ Swipe left detected - closing sidebar');
+        logger.debug('🖐️ Swipe left detected - closing sidebar');
         setIsOpen(false);
       }
     }

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AppError, ErrorHandler, ErrorType } from '@/lib/error-handler';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { 
   AlertTriangle, 
   Wifi, 
@@ -220,7 +221,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error boundary caught an error:', error, errorInfo);
+    logger.error('Error boundary caught an error:', error, errorInfo);
   }
 
   render() {

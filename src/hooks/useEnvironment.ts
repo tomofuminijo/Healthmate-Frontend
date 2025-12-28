@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { config, validateConfig, getCurrentEnvironment, type Environment } from '@/config/environment';
+import { logger } from '@/lib/logger';
 
 /**
  * 環境設定フック
@@ -20,7 +21,7 @@ export function useEnvironment() {
 
     // 開発環境でエラーがある場合は警告を表示
     if (!validation.isValid && config.isDevelopment()) {
-      console.warn('Environment configuration errors:', validation.errors);
+      logger.warn('Environment configuration errors:', validation.errors);
     }
   }, []);
 

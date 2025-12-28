@@ -15,6 +15,7 @@ import { Menu } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
 import { useChat } from '@/contexts/chat-context';
 import { useEdgeSwipeGesture } from '@/hooks/use-swipe-gesture';
+import { logger } from '@/lib/logger';
 
 /**
  * チャットテスト画面コンポーネント
@@ -34,7 +35,7 @@ const ChatTestScreen: React.FC = () => {
   // スワイプジェスチャーでサイドバーを開く
   useEdgeSwipeGesture({
     onEdgeSwipeRight: () => {
-      console.log('🖐️ Edge swipe detected - opening sidebar');
+      logger.debug('🖐️ Edge swipe detected - opening sidebar');
       const event = new CustomEvent('toggleMobileSidebar');
       window.dispatchEvent(event);
     },
@@ -44,7 +45,7 @@ const ChatTestScreen: React.FC = () => {
 
   // チャットセッション状態のログ出力
   React.useEffect(() => {
-    console.log('🖥️ ChatTestScreen render:', {
+    logger.debug('🖥️ ChatTestScreen render:', {
       isLoading,
       chatSessionsCount: chatSessions.length,
       hasCurrentSession: !!currentChatSession,
@@ -57,7 +58,7 @@ const ChatTestScreen: React.FC = () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
     }
   };
 
@@ -186,14 +187,14 @@ function App() {
   // アプリケーション初期化時にキャッシュチェックを実行
   React.useEffect(() => {
     try {
-      console.log('🚀 Healthmate App initializing...');
+      logger.info('🚀 Healthmate App initializing...');
       
       // キャッシュバージョンチェック（新しいデプロイ後の問題を防ぐ）
       CacheManager.checkAndClearCacheIfNeeded();
       
-      console.log('✅ App initialization completed');
+      logger.info('✅ App initialization completed');
     } catch (error) {
-      console.error('❌ App initialization failed:', error);
+      logger.error('❌ App initialization failed:', error);
       // 初期化エラーが発生した場合、安全のためキャッシュをクリア
       CacheManager.clearAllCache();
     }

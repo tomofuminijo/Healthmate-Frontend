@@ -8,6 +8,7 @@ import { ScrollToBottomButtonContainer } from './scroll-to-bottom-button';
 import { useChat } from '@/contexts/chat-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ErrorHandler, AppError } from '@/lib/error-handler';
+import { logger } from '@/lib/logger';
 
 interface ChatInterfaceProps {
   className?: string;
@@ -45,17 +46,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
       });
       
       if (health.available) {
-        console.log('✅ CoachAI サービスが利用可能です');
+        logger.info('✅ CoachAI サービスが利用可能です');
         // エラー状態をクリア
         if (error) {
           setError(null);
         }
       } else if (health.error) {
-        console.warn('⚠️ CoachAI サービスのヘルスチェックでエラー:', health.error);
+        logger.warn('⚠️ CoachAI サービスのヘルスチェックでエラー:', health.error);
         setError(health.error);
       }
     } catch (err) {
-      console.warn('⚠️ CoachAI ヘルスチェックに失敗。モックモードで動作します:', err);
+      logger.warn('⚠️ CoachAI ヘルスチェックに失敗。モックモードで動作します:', err);
       
       // ヘルスチェック失敗は警告レベルとして扱う（モックで動作可能）
       setServiceHealth({
@@ -80,7 +81,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
    * 既存機能を完全に保持しつつ、新しいレイアウトシステムと統合
    */
   const handleSendMessage = async (content: string) => {
-    console.log('🚀 handleSendMessage called:', {
+    logger.info('🚀 handleSendMessage called:', {
       content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
       hasCurrentSession: !!currentChatSession,
       sessionId: currentChatSession?.id,
@@ -92,7 +93,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
     setError(null);
 
     // ユーザーメッセージをローカルセッションに保存
-    console.log('👤 Adding user message...');
+    logger.debug('👤 Adding user message...');
     addMessage({
       role: 'user',
       content,
@@ -113,7 +114,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
 
       // 実際のCoachAI APIを最初に試行（ストリーミング）
       try {
-        console.log('🔗 CoachAI API呼び出し開始 (ストリーミング):', {
+        logger.info('🔗 CoachAI API呼び出し開始 (ストリーミング):', {
           sessionId: currentChatSession.id,
           hasJwtToken: !!jwtToken,
           jwtTokenLength: jwtToken?.length
@@ -124,7 +125,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         // 空のAIメッセージを先に作成
         const aiMessageId = `ai-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         
-        console.log('🤖 Creating initial AI message:', aiMessageId);
+        logger.debug('🤖 Creating initial AI message:', aiMessageId);
         
         addMessage({
           role: 'assistant',
@@ -135,7 +136,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         // React状態更新の完了を待つ（レイアウト遷移も考慮）
         await new Promise(resolve => setTimeout(resolve, 350)); // 300ms遷移 + 50ms余裕
         
-        console.log('⏰ State update wait completed, starting streaming...');
+        logger.debug('⏰ State update wait completed, starting streaming...');
 
         let accumulatedContent = '';
         
@@ -151,7 +152,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         )) {
           accumulatedContent += chunk;
           
-          console.log('📦 Received chunk:', {
+          logger.debug('📦 Received chunk:', {
             chunk: chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''),
             chunkLength: chunk.length,
             totalLength: accumulatedContent.length,
@@ -162,13 +163,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           updateMessage(aiMessageId, accumulatedContent);
         }
         
-        console.log('✅ 実際のCoachAI APIからストリーミング応答完了:', {
+        logger.info('✅ 実際のCoachAI APIからストリーミング応答完了:', {
           responseLength: accumulatedContent.length,
           sessionId: currentChatSession.id
         });
         
       } catch (apiError) {
-        console.warn('⚠️ 実際のCoachAI APIが利用できません。モックAPIにフォールバック:', {
+        logger.warn('⚠️ 実際のCoachAI APIが利用できません。モックAPIにフォールバック:', {
           error: apiError,
           errorType: apiError?.constructor?.name,
           errorMessage: (apiError as Error)?.message
@@ -195,13 +196,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           content: response.content + '\n\n*（注：モックAPIからの応答です）*',
         });
         
-        console.log('✅ モックAPIから応答を取得しました');
+        logger.info('✅ モックAPIから応答を取得しました');
       }
       
       setIsLoading(false);
       
     } catch (err) {
-      console.error('Chat error:', err);
+      logger.error('Chat error:', err);
       const appError = ErrorHandler.classify(err);
       setError(appError);
       
@@ -250,7 +251,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
       (message.role === 'user' || message.role === 'assistant')
     );
     
-    console.log('📊 Message validation:', {
+    logger.debug('📊 Message validation:', {
       totalMessages: displayMessages.length,
       validMessages: validMessages.length,
       hasMessages: validMessages.length > 0
@@ -345,7 +346,7 @@ const ChatInterfaceContent: React.FC<ChatInterfaceContentProps> = ({
     try {
       onSendMessage(content);
     } catch (error) {
-      console.error('❌ Error in message sending:', error);
+      logger.error('❌ Error in message sending:', error);
       // エラーが発生してもUIを壊さない
     }
   }, [onSendMessage]);

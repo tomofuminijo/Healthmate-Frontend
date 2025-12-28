@@ -2,6 +2,7 @@ import React from 'react';
 import { MessageInput } from './message-input';
 import { ChatContentContainer, useChatLayout } from './chat-layout-manager';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface EmptyStateWithTransitionControlProps {
   onSendMessage: (message: string) => void;
@@ -34,7 +35,7 @@ export const EmptyStateWithTransitionControl: React.FC<EmptyStateWithTransitionC
   const { isTransitioning, isEmptyMode, prefersReducedMotion } = useChatLayout();
 
   // デバッグログ
-  console.log('🏠 EmptyStateWithTransitionControl:', {
+  logger.debug('🏠 EmptyStateWithTransitionControl:', {
     isTransitioning,
     isEmptyMode,
     prefersReducedMotion,

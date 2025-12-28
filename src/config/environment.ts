@@ -3,6 +3,8 @@
  * 環境別設定の管理
  */
 
+import { logger } from '@/lib/logger';
+
 // 有効な環境の定義
 export const VALID_ENVIRONMENTS = ['dev', 'stage', 'prod'] as const;
 export type Environment = typeof VALID_ENVIRONMENTS[number];
@@ -17,7 +19,7 @@ export function getCurrentEnvironment(): Environment {
   const env = import.meta.env.HEALTHMATE_ENV || DEFAULT_ENVIRONMENT;
   
   if (!VALID_ENVIRONMENTS.includes(env as Environment)) {
-    console.warn(`Invalid environment: ${env}, defaulting to ${DEFAULT_ENVIRONMENT}`);
+    logger.warn(`Invalid environment: ${env}, defaulting to ${DEFAULT_ENVIRONMENT}`);
     return DEFAULT_ENVIRONMENT;
   }
   
@@ -98,7 +100,7 @@ export function validateConfig(): { isValid: boolean; errors: string[] } {
  */
 export function logConfig(): void {
   if (config.isDevelopment()) {
-    console.log('Environment Configuration:', {
+    logger.debug('Environment Configuration:', {
       environment: config.environment,
       aws: config.aws,
       cognito: {

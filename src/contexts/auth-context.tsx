@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { AuthSession, CognitoConfig } from '@/types/auth';
 import { AuthSessionManager } from '@/lib/auth-session-manager';
 import { CognitoClient } from '@/lib/cognito-client';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   authSession: AuthSession | null;
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
         await checkAmplifyAuthState();
       }
     } catch (error) {
-      console.error('Auth initialization failed:', error);
+      logger.error('Auth initialization failed:', error);
       AuthSessionManager.clearAuthSession();
       setAuthSession(null);
     } finally {
@@ -83,7 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       
       if (session && session.jwtToken) {
         // Amplifyが有効なトークンを保持している場合、ローカルセッションを再構築
-        console.log('Amplify内部状態からセッションを復元:', session.userId);
+        logger.debug('Amplify内部状態からセッションを復元:', session.userId);
         
         const reconstructedSession: AuthSession = {
           userId: session.userId,
@@ -104,7 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
         setAuthSession(null);
       }
     } catch (error) {
-      console.error('Failed to check Amplify auth state:', error);
+      logger.error('Failed to check Amplify auth state:', error);
       // Amplify状態確認に失敗した場合、ログアウト状態とする
       setAuthSession(null);
     }
@@ -127,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       
       setAuthSession(updatedSession);
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      logger.error('Token refresh failed:', error);
       // Refresh失敗 → Auth_Session期限切れ
       AuthSessionManager.clearAuthSession();
       setAuthSession(null);
@@ -148,9 +149,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       setAuthSession(newAuthSession);
       setPendingSignInResult(null);
       
-      console.log('Sign in successful, auth session set:', newAuthSession.username);
+      logger.debug('Sign in successful, auth session set:', newAuthSession.username);
     } catch (error) {
-      console.error('Sign in failed:', error);
+      logger.error('Sign in failed:', error);
       
       // 強制パスワード変更が必要な場合
       if (error instanceof Error && error.name === 'NewPasswordRequiredException') {
@@ -184,9 +185,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       setAuthSession(newAuthSession);
       setPendingSignInResult(null);
       
-      console.log('New password challenge completed, auth session set:', newAuthSession.username);
+      logger.debug('New password challenge completed, auth session set:', newAuthSession.username);
     } catch (error) {
-      console.error('Complete new password failed:', error);
+      logger.error('Complete new password failed:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -205,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
       AuthSessionManager.clearAuthSession();
       setAuthSession(null);
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed:', error);
       // エラーが発生してもローカルセッションはクリア
       AuthSessionManager.clearAuthSession();
       setAuthSession(null);
@@ -235,7 +236,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, cognitoCon
         const updatedSession = AuthSessionManager.loadAuthSession();
         return updatedSession?.jwtToken || null;
       } catch (error) {
-        console.error('Failed to refresh token:', error);
+        logger.error('Failed to refresh token:', error);
         return null;
       }
     }

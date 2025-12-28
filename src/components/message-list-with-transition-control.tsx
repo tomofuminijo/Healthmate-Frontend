@@ -3,6 +3,7 @@ import { Message } from '@/types/chat';
 import { MessageList } from './message-list';
 import { useChatLayout } from './chat-layout-manager';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface MessageListWithTransitionControlProps {
   messages: Message[];
@@ -38,7 +39,7 @@ export const MessageListWithTransitionControl = React.forwardRef<
   React.useImperativeHandle(forwardedRef, () => {
     // 遷移完了後は内部のMessageListのrefを返す
     if (shouldShowMessages && internalRef.current) {
-      console.log('🎭 Returning actual MessageList ref:', {
+      logger.debug('🎭 Returning actual MessageList ref:', {
         hasInternalRef: !!internalRef.current,
         scrollHeight: internalRef.current.scrollHeight,
         clientHeight: internalRef.current.clientHeight,
@@ -50,11 +51,11 @@ export const MessageListWithTransitionControl = React.forwardRef<
     // 遷移中または表示前は、外側のコンテナ要素を返す
     const containerElement = document.querySelector('[data-transition-controlled="true"]') as HTMLDivElement;
     if (containerElement) {
-      console.log('🎭 Returning container element during transition');
+      logger.debug('🎭 Returning container element during transition');
       
       // コンテナ要素にscrollToBottomメソッドを追加
       (containerElement as any).scrollToBottom = () => {
-        console.log('🎭 Transition: scrollToBottom called during transition - will retry after transition');
+        logger.debug('🎭 Transition: scrollToBottom called during transition - will retry after transition');
         // 遷移完了後にリトライ
         setTimeout(() => {
           if (internalRef.current && typeof (internalRef.current as any).scrollToBottom === 'function') {
@@ -72,7 +73,7 @@ export const MessageListWithTransitionControl = React.forwardRef<
     dummyElement.style.overflow = 'hidden';
     
     (dummyElement as any).scrollToBottom = () => {
-      console.log('🎭 Dummy: scrollToBottom called on dummy element');
+      logger.debug('🎭 Dummy: scrollToBottom called on dummy element');
     };
     
     return dummyElement;
@@ -81,14 +82,14 @@ export const MessageListWithTransitionControl = React.forwardRef<
   // 遷移完了後にスクロール状態を再チェック
   React.useEffect(() => {
     if (shouldShowMessages && internalRef.current) {
-      console.log('🎭 Transition completed, triggering scroll check');
+      logger.debug('🎭 Transition completed, triggering scroll check');
       
       // 遷移完了後に少し遅延してスクロール状態をチェック
       const recheckScroll = () => {
         if (onScrollToBottom) {
           // 親コンポーネントにスクロール状態の再チェックを促す
           setTimeout(() => {
-            console.log('🎭 Triggering scroll recheck after transition');
+            logger.debug('🎭 Triggering scroll recheck after transition');
             // ダミーのスクロールイベントを発火してスクロールボタンの状態を更新
             const scrollEvent = new Event('scroll');
             if (internalRef.current) {
